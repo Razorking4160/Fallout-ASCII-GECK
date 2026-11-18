@@ -100,7 +100,7 @@ The studio does not load a pack from the game repo automatically: import one wit
 save or deployment.
 
 The **Open the game ↗** link points at the game's own deployment
-(<https://wasteland-ascii-dswq78-preview.freebuff.site/>) because the two apps now live on
+(<https://wasteland-ascii-dswq78.freebuff.site/>) because the two apps now live on
 separate origins. For side-by-side development from the workspace, point the `href` in
 `index.html` back at `../game/index.html`.
 
@@ -114,7 +114,7 @@ manifest for the live host: `worker.js` answers every request from `dist/` throu
 static-assets binding, with no server logic. Any static host can serve `dist/` as is,
 since every path is relative.
 
-**Live:** <https://wasteland-studio-spb9hh-preview.freebuff.site>
+**Live:** <https://wasteland-studio-spb9hh.freebuff.site>
 
 Content still travels between the two deployments as a content pack or as generated
 `js/data/*-authored.js` files; the studio's storage stays scoped to its own origin.
