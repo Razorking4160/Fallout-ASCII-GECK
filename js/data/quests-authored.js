@@ -70,6 +70,38 @@
       text: 'The roach nest was dug by something bigger. Rook traced the tunnel south and wants the radscorpion matriarch put down before it breeds.',
       goals: [{ kind: 'kill', id: 'radscorpion_matriarch', need: 1, text: 'Kill the radscorpion matriarch' }],
       reward: { caps: 70, kits: 1, xp: 35, karma: 6, rep: { market: 6 } }
+    },
+    // Route 9's crossing: the broken span blocks carts, so the wardens pay to have it patched.
+    crossing: {
+      name: 'The Bypass Span',
+      giver: 'vera',
+      map: 'bypass',
+      text: 'A broken span on Route 9 forces every caravan to drag its carts through the mud. Vera pays to have the crossing patched.',
+      goals: [{ kind: 'repair', id: 'bridge_broken', need: 1, text: 'Repair the span on Route 9' }],
+      reward: { caps: 70, kits: 1, xp: 30, karma: 6, rep: { road: 10 } },
+      alts: {
+        skim: {
+          name: 'Billed the wardens',
+          reward: { caps: 110, xp: 30, karma: -5, rep: { road: -8 } },
+          done: 'Vera pays the inflated bill without blinking. The wardens keep books, and they will remember the line item.'
+        }
+      }
+    },
+    // The market's water works: the intake pump seizes and Sable pays to get it running.
+    water: {
+      name: 'Clean Water',
+      giver: 'fence',
+      map: 'pumphouse',
+      text: 'The market drinks from the old pumphouse, and its intake pump has seized. Sable wants it running before the traders start buying water somewhere else.',
+      goals: [{ kind: 'repair', id: 'pump_broken', need: 1, text: 'Free the pumphouse intake pump' }],
+      reward: { caps: 60, stims: 1, xp: 25, karma: 6, rep: { market: 8 } },
+      alts: {
+        cut: {
+          name: 'Took a cut of the water money',
+          reward: { caps: 85, xp: 25, karma: -5, rep: { market: -6 } },
+          done: 'Sable counts out the cut and adds a line to her ledger. Clean water, dirty books.'
+        }
+      }
     }
   };
 
@@ -91,9 +123,25 @@
             { t: 'The ears were worth more than that.', fx: { quest: ['turnin', 'ears', 'skim'] }, to: 'work', if: c => c.quest === 'ready' },
             { t: 'Later.', to: '@' }
           ]
+        },
+        water: {
+          text: c => c.q('water') === 'done'
+            ? 'The tap runs clear again. The market drinks and nobody asks where it comes from.'
+            : c.q('water') === 'ready'
+              ? 'You freed the pump? Then the water is clean and the price stays honest.'
+              : 'The market drinks from the old pumphouse, and its intake has seized. A repair kit and a steady hand would free it. Clean water is the only honest thing I sell.',
+          opts: [
+            { t: 'I will get the pump running.', fx: { quest: ['take', 'water'] }, to: 'water', if: c => c.q('water') === 'none' },
+            { t: 'The pump is running.', fx: { quest: ['turnin', 'water'], trust: 1 }, to: 'water', if: c => c.q('water') === 'ready' },
+            { t: 'Clean water is worth more than that.', fx: { quest: ['turnin', 'water', 'cut'] }, to: 'water', if: c => c.q('water') === 'ready' },
+            { t: 'Later.', to: '@' }
+          ]
         }
       },
-      add: { greet: [{ t: 'Got work?', to: 'work' }] }
+      add: {
+        greet: [{ t: 'Got work?', to: 'work' }, { t: 'About the water...', to: 'water' }],
+        trade: [{ t: 'About the water...', to: 'water' }]
+      }
     },
     vera: {
       quest: 'wolves',
@@ -111,11 +159,24 @@
             { t: 'It is dead.', fx: { quest: ['turnin', 'wolves'], trust: 1 }, to: 'work', if: c => c.quest === 'ready' },
             { t: 'Later.', to: '@' }
           ]
+        },
+        crossing: {
+          text: c => c.q('crossing') === 'done'
+            ? 'The carts roll over the new span. Let the mud keep the rest.'
+            : c.q('crossing') === 'ready'
+              ? 'You patched the span? Let me see your hands. Good. The road owes you one.'
+              : 'Route 9 has a broken span and every cart has to be dragged through the mud. A repair kit and a steady hand would put it right. The wardens pay for the road, not for the mud.',
+          opts: [
+            { t: 'I will patch the span.', fx: { quest: ['take', 'crossing'] }, to: 'crossing', if: c => c.q('crossing') === 'none' },
+            { t: 'The span is fixed.', fx: { quest: ['turnin', 'crossing'], trust: 1 }, to: 'crossing', if: c => c.q('crossing') === 'ready' },
+            { t: 'The wardens can afford more than that.', fx: { quest: ['turnin', 'crossing', 'skim'] }, to: 'crossing', if: c => c.q('crossing') === 'ready' },
+            { t: 'Later.', to: '@' }
+          ]
         }
       },
       add: {
-        greet: [{ t: 'Anything else out here?', to: 'work' }],
-        why: [{ t: 'Anything else out here?', to: 'work' }]
+        greet: [{ t: 'Anything else out here?', to: 'work' }, { t: 'That broken span on Route 9...', to: 'crossing' }],
+        why: [{ t: 'Anything else out here?', to: 'work' }, { t: 'That broken span on Route 9...', to: 'crossing' }]
       }
     },
     dealer: {

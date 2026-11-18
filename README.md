@@ -104,6 +104,13 @@ The **Open the game ↗** link points at the game's own deployment
 separate origins. For side-by-side development from the workspace, point the `href` in
 `index.html` back at `../game/index.html`.
 
+Whenever a game change touches shared runtime code, copy the changed files here and run
+the game's `tools/check-studio-sync.sh` (from the game checkout, passing this directory).
+It compares every script and stylesheet the game loads, except the deliberately
+different `js/main.js` and `js/systems/menu.js`, and lists anything still out of step.
+Studio-only styles live in `css/studio.css`, which is why the shared stylesheets can stay
+byte-identical.
+
 ## Deployment
 
 The studio is its own repository and its own static site; the game does not serve any of

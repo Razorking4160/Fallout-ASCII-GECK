@@ -1,0 +1,6 @@
+/* Studio-only styles. Everything shared with the game lives in main.css,
+   terminal.css and mobile.css, which must stay byte-identical to the game's
+   copies (see the game's tools/check-studio-sync.sh). */
+#appswitch{text-align:right;font-size:13px;margin-top:-4px}
+#appswitch a{color:var(--dim);text-decoration:none;border-bottom:1px dotted var(--dim)}
+#appswitch a:hover{color:var(--fg)}

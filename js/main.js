@@ -339,6 +339,8 @@
     // Definitions shipped in js/data/defs-authored.js sit under the browser's
     // Forge overrides, so a studio edit still wins.
     if (WA.baked) WA.baked.apply(WA.AUTHORED_DEFS);
+    // Pack the hand-written text maps once, before the editor or the preview reads them.
+    if (WA.maps && WA.maps.normalize) WA.maps.normalize();
     WA.forge.init();
     // Authored quests and dialogue merge after Forge overrides load, so a saved
     // entity edit cannot hide a hand-written quest branch. The authoring store

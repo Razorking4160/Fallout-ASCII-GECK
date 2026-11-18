@@ -111,8 +111,27 @@
 
   const draw = () => WA.view.draw();
 
+  /* Hand-written maps in game-data.js still use the old one-character rows.
+     Convert one to the packed format start() reads, once: a packed map is
+     returned untouched, so conversion is safe to call on every entry path. */
+  function normalizeMap(id) {
+    const m = WA.GAME.maps[id];
+    if (!m || m.legend) return m;
+    const packed = toV2(m);
+    WA.GAME.maps[id] = packed;
+    return packed;
+  }
+
+  /* Convert every shipped map at boot, so the Pip-Boy, the map editor and the
+     waypoint search see placements and exits before a map is ever entered. */
+  function normalize() {
+    let n = 0;
+    for (const id in WA.GAME.maps) if (normalizeMap(id)) n++;
+    return n;
+  }
+
   function start(id, test) {
-    const GAME = WA.GAME, m = GAME.maps[id];
+    const GAME = WA.GAME, m = normalizeMap(id);
     if (!m) return false;
     if (WA.dlg) WA.dlg.close();
     if (WA.loot) WA.loot.abort();
@@ -625,7 +644,7 @@
     return true;
   }
 
-  WA.maps = { POOL, pack: packMap, toV2 };
+  WA.maps = { POOL, pack: packMap, toV2, normalize };
   WA.game = {
     VW: G.VW, VH: G.VH,
     get S() { return G.S; },

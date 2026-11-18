@@ -70,6 +70,12 @@
         repairMsg: 'The generator coughs, catches, and floods the room with light.' },
       generator_on: { glyph: '⚙', name: 'Generator', solid: 1, c: 'good', light: 4,
         msg: 'The repaired generator hums steadily.' },
+      pump_broken: { glyph: '≈', name: 'Seized pump', solid: 1, c: 'warn',
+        msg: 'The intake pump is seized. A repair kit and a steady hand could free it.',
+        repair: 'pump_on', repairDiff: 30, repairNeed: 'repair_kit',
+        repairMsg: 'The pump shudders, catches, and starts pulling water again.' },
+      pump_on: { glyph: '≈', name: 'Intake pump', solid: 1, c: 'good', light: 2,
+        msg: 'The intake pump pulls clean water out of the sump.' },
       rail: { glyph: '╪', name: 'Railway', c: '#9aa7a0', bg: '#1c1c1c' },
       pit: { glyph: '◌', name: 'Pit', c: 'dim', bg: '#101010', hurt: 2, dt: 'melee', msg: 'You stumble into a pit!' },
       crater: { glyph: '○', name: 'Crater', c: 'dim', bg: '#1a1612', hurt: 1, dt: 'melee', msg: 'Loose rubble slides underfoot.' },
@@ -834,7 +840,7 @@
         "########################",
         "#@..*...>..##....##....#",
         "#..........##....##.=$.#",
-        "#..###...........#.....#",
+        "#..###...........#..>..#",
         "#..#.....##..%g......ς~#",
         "#..#....F##.......##...#",
         "#....!...♦..#...^.##...#",
@@ -845,7 +851,40 @@
         "#.Ω........+#....###...#",
         "#.....$.U...........Ʀ.&#",
         "########################"
-      ], exits: { '6,1': 'outskirts' } }
+      ], exits: { '8,1': 'outskirts', '20,3': 'bypass' } },
+      // Route 9 is the long road east: a three-lane bypass with a broken span in
+      // the middle. The span blocks carts but not people, so the crossing is a
+      // repair job rather than a wall.
+      bypass: { name: 'Route 9 Bypass', amb: 0.6, indoor: false, weather: 'rain', rows: [
+        "##########################",
+        "#........................#",
+        "#..▬.....♨........!......#",
+        "#·········≡······R·······#",
+        "#>@·······≡·············>#",
+        "#·········≡·······c······#",
+        "#........................#",
+        "#..~~....g..........c....#",
+        "#..~~.......▬..........r.#",
+        "#........................#",
+        "#..$.....!......%........#",
+        "#........................#",
+        "##########################"
+      ], exits: { '1,4': 'ruins', '24,4': 'pumphouse' } },
+      // The market's water works: dark, wet, and guarded by whatever crawled in
+      // when the pumps stopped.
+      pumphouse: { name: 'Flooded Pumphouse', amb: 0.14, indoor: true, weather: 'none', rows: [
+        "####################",
+        "#..................#",
+        "#..~~..............#",
+        "#...≈≈...c.........#",
+        "#..................#",
+        ">.........◍........#",
+        "#..............F...#",
+        "#.....r......r.....#",
+        "#..$...............#",
+        "#..................#",
+        "####################"
+      ], exits: { '0,5': 'bypass' } }
     },
     // The overworld: places on the road map and the hours each road takes.
     // A node's `road` list is the pool of things that can follow you in there.
@@ -853,14 +892,17 @@
       nodes: {
         vault: { x: 2, y: 2, glyph: 'V', label: 'VAULT 42', road: [] },
         outskirts: { x: 9, y: 4, glyph: 'O', label: 'OUTSKIRTS', road: ['raider', 'feral_dog'] },
-        ruins: { x: 16, y: 2, glyph: 'R', label: 'RUINS', road: ['raider', 'feral_ghoul'] }
+        ruins: { x: 16, y: 2, glyph: 'R', label: 'RUINS', road: ['raider', 'feral_ghoul'] },
+        bypass: { x: 12, y: 7, glyph: 'B', label: 'ROUTE 9', road: ['feral_dog', 'raider'] },
+        pumphouse: { x: 18, y: 6, glyph: 'P', label: 'PUMPHOUSE', road: ['feral_ghoul'] }
       },
-      routes: [['vault', 'outskirts', 2], ['outskirts', 'ruins', 3]]
+      routes: [['vault', 'outskirts', 2], ['outskirts', 'ruins', 3],
+        ['ruins', 'bypass', 2], ['bypass', 'pumphouse', 1]]
     }
   };
 
   // Legacy symbol -> ID table. Kept so old text maps and old saved Forge data still load.
-  const LEG = { '#': 'wall', '.': 'floor', '+': 'door', '/': 'door_open', T: 'terminal', '~': 'rad_puddle', '>': 'exit', r: 'radroach', g: 'feral_ghoul', P: 'protectron', $: 'caps', '!': 'stimpak', '%': 'radaway', '&': 'repair_kit', '=': 'ammo_10mm', '^': 'ammo_ecell', b: 'baseball_bat', p: 'pistol_10mm', l: 'laser_pistol', a: 'leather_armor', A: 'combat_armor', S: 'rust_sentinel', U: 'yao_guai', 'ς': 'radscorpion_matriarch', N: 'mira', V: 'vale', K: 'keeper', 'ƒ': 'fence', '⚙': 'generator_broken', R: 'raider', w: 'clean_water', x: 'toxic_waste', o: 'nuka_cola', f: 'cram', m: 'irradiated_meat', k: 'vault_key', B: 'buffout', j: 'jet', M: 'medx', '*': 'grenade', i: 'molotov', c: 'crate', C: 'mira_cache', F: 'footlocker', n: 'bobby_pin', G: 'strongbox', L: 'market_lockbox', H: 'safe', D: 'secure_door', '♦': 'dealer', 'Ω': 'rook', 'λ': 'vera', 'ʘ': 'ash', 'Ʀ': 'raider_rivet' };
+  const LEG = { '#': 'wall', '.': 'floor', '+': 'door', '/': 'door_open', T: 'terminal', '~': 'rad_puddle', '>': 'exit', r: 'radroach', g: 'feral_ghoul', P: 'protectron', $: 'caps', '!': 'stimpak', '%': 'radaway', '&': 'repair_kit', '=': 'ammo_10mm', '^': 'ammo_ecell', b: 'baseball_bat', p: 'pistol_10mm', l: 'laser_pistol', a: 'leather_armor', A: 'combat_armor', S: 'rust_sentinel', U: 'yao_guai', 'ς': 'radscorpion_matriarch', N: 'mira', V: 'vale', K: 'keeper', 'ƒ': 'fence', '⚙': 'generator_broken', R: 'raider', w: 'clean_water', x: 'toxic_waste', o: 'nuka_cola', f: 'cram', m: 'irradiated_meat', k: 'vault_key', B: 'buffout', j: 'jet', M: 'medx', '*': 'grenade', i: 'molotov', c: 'crate', C: 'mira_cache', F: 'footlocker', n: 'bobby_pin', G: 'strongbox', L: 'market_lockbox', H: 'safe', D: 'secure_door', '♦': 'dealer', 'Ω': 'rook', 'λ': 'vera', 'ʘ': 'ash', 'Ʀ': 'raider_rivet', '·': 'road', '≡': 'bridge_broken', '≈': 'pump_broken', '▬': 'wrecked_car', '♨': 'campfire', '◍': 'glowing_fungus' };
 
   WA.GAME = GAME;
   WA.LEG = LEG;
