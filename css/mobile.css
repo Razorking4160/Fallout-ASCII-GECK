@@ -1,0 +1,25 @@
+/* Touch targets, held buttons and small-screen scaling. */
+#pad button{touch-action:none;-webkit-user-select:none;user-select:none}
+#gwrap,#pal,button,select{touch-action:manipulation}
+@media (max-width:360px){
+  #app{padding:8px 8px;gap:8px}
+  #pad{gap:6px}
+  #pad button{height:48px;font-size:18px}
+  #bar{font-size:14px;padding:6px 8px}
+  #log{font-size:13px}
+  #pip,#chargen,#vats,#dlg,#trade,#pick,#loot,#lock,#hack,#gamble,#ending,#death{font-size:14px;padding:6px 8px}
+  .cgcard{font-size:11px;padding:4px 6px}
+  .cgname{font-size:13px}
+  .gamtabs button{height:42px;font-size:11px}
+  .piptabs{gap:2px}
+  .piptabs button{font-size:9px;height:28px}
+  .pausetag{display:none}
+}
+@media (max-height:640px){
+  #log{height:5.2em}
+  #pad button:not(.small){height:46px}
+  #pad button.small{height:40px}
+}
+@media (prefers-reduced-motion:reduce){
+  [class*="fx-"]{animation:none!important}
+}

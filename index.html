@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wasteland Studio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#040904">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wasteland">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/terminal.css">
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+<div id="app">
+  <div id="tabs"><button data-t="play">Play</button><button data-t="edit">Edit</button><button data-t="forge">Forge</button><button data-t="bench">Bench</button></div>
+  <div id="appswitch"><a href="https://wasteland-ascii-dswq78-preview.freebuff.site/" target="_blank" rel="noopener">Open the game ↗</a></div>
+  <div id="play">
+  <div id="bar"></div>
+  <div id="updatebar" hidden><span id="updatetext">A new build is ready.</span><button id="updatebtn">Reload</button></div>
+  <div id="modalback" hidden></div>
+  <div id="menu" hidden></div>
+  <div id="pip" hidden></div>
+  <div id="chargen" hidden></div>
+  <div id="crt"><div id="screen"></div><canvas id="weather" aria-hidden="true"></canvas></div>
+  <div id="log"></div>
+  <div id="vats" hidden></div>
+  <div id="dlg" hidden></div>
+  <div id="trade" hidden></div>
+  <div id="pick" hidden></div>
+  <div id="loot" hidden></div>
+  <div id="lock" hidden></div>
+  <div id="hack" hidden></div>
+  <div id="gamble" hidden></div>
+  <div id="ending" hidden></div>
+  <div id="death" hidden></div>
+  <div id="pad">
+    <button class="small" data-k="pip">Pip-Boy</button>
+    <button class="small" data-k="wait">Wait</button>
+    <button class="small" data-k="fire" id="firebtn">Fire</button>
+    <button class="small" data-k="vats" id="vatsbtn">VATS</button>
+    <span></span>
+    <button data-d="0,-1" aria-label="Up">▲</button>
+    <span></span>
+    <span></span>
+    <button data-d="-1,0" aria-label="Left">◀</button>
+    <button data-d="0,1" aria-label="Down">▼</button>
+    <button data-d="1,0" aria-label="Right">▶</button>
+    <button class="small" data-k="throw" id="throwbtn">Throw</button>
+  </div>
+  </div>
+  <div id="edit">
+    <div class="row"><select id="msel"></select><button id="enew">New map</button></div>
+    <details id="libwrap"><summary>Map library <span id="libn" class="dim"></span></summary>
+      <input id="lsearch" placeholder="Search by id or name" style="width:100%;margin-top:4px">
+      <div id="libtools"><span id="libsel" class="dim"></span><button id="liball">All</button><button id="libnone">None</button></div>
+      <div id="liblist"></div>
+    </details>
+    <div class="row"><label style="flex:1">Name <input id="ename" style="flex:1;width:100%;min-width:0"></label></div>
+    <div class="row"><label>W <input id="ew" type="number" inputmode="numeric"></label><label>H <input id="eh" type="number" inputmode="numeric"></label><button id="eborder">Wall border</button></div>
+    <div id="palfilter"><input id="psearch" placeholder="Search palette, glyph, ID or group"><span id="pcount" class="dim"></span><button id="pexpand" type="button">Expand all</button><button id="pcollapse" type="button">Collapse all</button></div>
+    <div id="pal"></div>
+    <div id="brush"></div>
+    <details id="bedit" open>
+      <summary>Brush editor</summary>
+      <div id="beditmeta" class="dim"></div>
+      <div id="bfields"></div>
+      <div class="row"><button id="bsave">Save brush</button><button id="brevert">Revert</button><button id="bfull">Full Forge</button></div>
+      <div id="bmsg" class="dim"></div>
+    </details>
+    <div id="lnk" class="row" hidden><label style="flex:1">Leads to <select id="lsel" style="flex:1"></select></label></div>
+    <div class="row"><label style="flex:1">Zoom <input type="range" id="ezoom" min="0" max="28" step="1" value="0"></label><span id="ezoomv" class="dim" style="width:3em;text-align:right">fit</span></div>
+    <div id="gwrap"><canvas id="grid"></canvas></div>
+    <div class="row"><button id="etest">Test</button><button id="eexp">Export</button><button id="eimp">Import</button><button id="edel">Revert</button></div>
+    <div class="row"><button id="eexpall">Export all</button><button id="eship">Ship to code</button></div>
+    <div class="row"><label style="flex:1">Load file <input type="file" id="efile" accept=".json,application/json" style="width:100%;padding:4px"></label></div>
+    <label style="margin:2px 0"><input type="checkbox" id="mbgon" style="width:auto"> Map background <input type="color" id="mbg" value="#0d2410" style="width:48px;padding:0"></label>
+    <div class="row"><label style="flex:1">Ambient light <input type="range" id="eamb" min="0" max="100" step="1" value="100"></label><span id="eambv" class="dim" style="width:3em;text-align:right">100%</span></div>
+    <label style="margin:2px 0"><input type="checkbox" id="eindoor" style="width:auto"> Indoor map (lighting ignores time of day)</label>
+    <div class="row"><label style="flex:1">Weather <select id="eweather"><option value="none">None</option><option value="rain">Rain</option><option value="fog">Fog</option></select></label></div>
+    <label style="margin:2px 0"><input type="checkbox" id="animchk" checked style="width:auto"> Animated effects (flicker, pulse, blink, rainbow)</label>
+    <label style="margin:2px 0"><input type="checkbox" id="crtchk" checked style="width:auto"> CRT scanlines and phosphor glow</label>
+    <label style="margin:2px 0"><input type="checkbox" id="fogchk" checked style="width:auto"> Fog of war (applies to all maps)</label>
+    <div id="emsg"></div>
+    <textarea id="io" rows="6" spellcheck="false" placeholder="Export puts map text here. Paste map text here and tap Import."></textarea>
+  </div>
+  <div id="forge">
+    <div class="row"><select id="fkind"><option value="entities">Enemies</option><option value="items">Items</option><option value="tiles">Tiles</option></select><select id="fsel"></select></div>
+    <div class="row"><label style="flex:1">Symbol <input id="fsym" maxlength="8" style="width:56px"></label><button id="fnew">New</button></div>
+    <details id="symwrap"><summary>Symbol library</summary>
+      <div id="symtools"><input id="symsearch" placeholder="Search symbols"><select id="symcat"><option value="">All categories</option></select></div>
+      <div id="symcount" class="dim"></div>
+      <div id="symlib"></div>
+    </details>
+    <div id="ffields"></div>
+    <div class="row"><button id="fsave">Save</button><button id="fdel">Delete</button><button id="fexp">Export</button><button id="fval">Validate content</button><button id="freset">Reset all</button></div>
+    <div id="fmsg"></div>
+    <textarea id="fio" rows="6" spellcheck="false" placeholder="Export puts your data here, ready to paste into the game code."></textarea>
+    <details id="authwrap">
+      <summary>Author a job &amp; its dialogue <span id="authn" class="dim"></span></summary>
+      <div class="row"><select id="aqsel"></select><button id="aqnew">New</button></div>
+      <div class="row"><label>Name <input id="aqname" maxlength="40"></label><label class="narrow">ID <input id="aqid" maxlength="32" placeholder="auto"></label></div>
+      <div class="row"><label>Giver <select id="aqgiver"></select></label><label>Map <select id="aqmap"></select></label></div>
+      <div class="row"><label>Unlocked by <select id="aqreq"></select></label></div>
+      <label>Brief <input id="aqtext" maxlength="240"></label>
+      <div id="aqgoals"></div>
+      <div class="row"><button id="aqgoaladd" type="button">Add another goal</button></div>
+      <div class="row"><label>Caps <input id="aqcaps" type="number" min="0" max="99999"></label><label>Stims <input id="aqstims" type="number" min="0" max="99"></label><label>Kits <input id="aqkits" type="number" min="0" max="99"></label><label>XP <input id="aqxp" type="number" min="0" max="99999"></label><label>Karma <input id="aqkarma" type="number" min="-99" max="99"></label></div>
+      <div id="aqreps"></div>
+      <div class="row"><button id="aqrepadd" type="button">Add standing change</button></div>
+      <label>Talk page text <input id="aqptext" maxlength="240"></label>
+      <div class="row"><label>Accept label <input id="aqtake" maxlength="60"></label><label>Hand-in label <input id="aqturn" maxlength="60"></label></div>
+      <div class="row"><label>Link on page <select id="aqhook"></select></label><label>Link label <input id="aqlabel" maxlength="60"></label></div>
+      <details id="aqaltwrap">
+        <summary>Alternate turn-ins <span id="aqaltn" class="dim"></span></summary>
+        <div id="aqalts"></div>
+        <div class="row"><button id="aqaltadd" type="button">Add alternate outcome</button></div>
+      </details>
+      <div id="aqmsg" class="dim"></div>
+      <div class="row"><button id="aqsave">Save quest</button><button id="aqdel">Delete quest</button><button id="aqexp">Export authored</button></div>
+    </details>
+    <details id="browsewrap">
+      <summary>Browse jobs &amp; dialogue <span id="bqn" class="dim"></span></summary>
+      <div class="row"><select id="bqsel"></select></div>
+      <div id="bqout"></div>
+      <details id="bqallwrap">
+        <summary>All content problems <span id="bqalln" class="dim"></span></summary>
+        <div id="bqall"></div>
+      </details>
+    </details>
+    <details id="packwrap">
+      <summary>Content packs</summary>
+      <div class="note">A pack carries your saved maps, Forge definitions and authored jobs to
+        a game on another origin. Importing one merges it into this studio's stores and reloads.</div>
+      <label>Pack name <input id="pname" maxlength="60" placeholder="My wasteland"></label>
+      <div class="row"><button id="pexport" type="button">Export content pack</button><button id="pdefs" type="button">Export definitions for game</button></div>
+      <div class="row"><label style="flex:1">Import a pack <input type="file" id="pfile" accept=".json,application/json" style="width:100%;padding:4px"></label></div>
+      <div id="pmsg" class="dim"></div>
+    </details>
+  </div>
+  <div id="bench">
+    <div class="note">Runs the real save/autosave/load path against synthetic 200×200 maps. It uses a
+      temporary save, settles any pending autosave first, and restores your game afterwards; benchmark
+      data never enters autosave or slots.</div>
+    <div class="row"><label style="flex:1">Maps <input id="bncount" type="number" inputmode="numeric" min="10" max="2000" step="10" value="1000"></label><button id="bnrun">Run benchmark</button></div>
+    <div id="bnout" class="dim">Pick a map count and run.</div>
+  </div>
+</div>
+<script src="js/storage/settings.js"></script>
+<script src="js/engine/util.js"></script>
+<script src="js/data/version.js"></script>
+<script src="js/systems/scale.js"></script>
+<script src="js/data/game-data.js"></script>
+<script src="js/data/defs-authored.js"></script>
+<script src="js/data/quests-authored.js"></script>
+<script src="js/data/maps-authored.js"></script>
+<script src="js/data/symbols.js"></script>
+<script src="js/engine/visibility.js"></script>
+<script src="js/systems/time.js"></script>
+<script src="js/engine/lighting.js"></script>
+<script src="js/engine/pathfinding.js"></script>
+<script src="js/engine/world.js"></script>
+<script src="js/systems/baked.js"></script>
+<script src="js/engine/weather.js"></script>
+<script src="js/engine/renderer.js"></script>
+<script src="js/systems/limbs.js"></script>
+<script src="js/systems/skills.js"></script>
+<script src="js/systems/perks.js"></script>
+<script src="js/systems/traits.js"></script>
+<script src="js/systems/character.js"></script>
+<script src="js/systems/inventory.js"></script>
+<script src="js/systems/field.js"></script>
+<script src="js/systems/loot.js"></script>
+<script src="js/systems/lockpick.js"></script>
+<script src="js/systems/hacking.js"></script>
+<script src="js/systems/gambling.js"></script>
+<script src="js/systems/party.js"></script>
+<script src="js/systems/damage.js"></script>
+<script src="js/systems/rads.js"></script>
+<script src="js/systems/weapons.js"></script>
+<script src="js/systems/status.js"></script>
+<script src="js/systems/addiction.js"></script>
+<script src="js/systems/combat.js"></script>
+<script src="js/systems/vats.js"></script>
+<script src="js/systems/quests.js"></script>
+<script src="js/systems/reputation.js"></script>
+<script src="js/systems/authored.js"></script>
+<script src="js/storage/content-pack.js"></script>
+<script src="js/systems/dialogue.js"></script>
+<script src="js/systems/ending.js"></script>
+<script src="js/engine/ai.js"></script>
+<script src="js/engine/turn.js"></script>
+<script src="js/storage/save-manager.js"></script>
+<script src="js/systems/death.js"></script>
+<script src="js/systems/menu.js"></script>
+<script src="js/systems/overworld.js"></script>
+<script src="js/systems/rest.js"></script>
+<script src="js/systems/schedule.js"></script>
+<script src="js/systems/trade.js"></script>
+<script src="js/systems/bounty.js"></script>
+<script src="js/systems/pickpocket.js"></script>
+<script src="js/systems/pipboy.js"></script>
+<script src="js/storage/map-store.js"></script>
+<script src="js/editors/forge.js"></script>
+<script src="js/editors/authoring.js"></script>
+<script src="js/editors/pack-ui.js"></script>
+<script src="js/editors/map-editor.js"></script>
+<script src="js/editors/benchmark.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

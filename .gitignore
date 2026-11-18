@@ -1,0 +1,7 @@
+# Deployment staging output (rebuilt by tools/stage-deploy.sh)
+/dist/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp

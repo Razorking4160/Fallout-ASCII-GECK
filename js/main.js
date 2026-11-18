@@ -1,0 +1,367 @@
+/* Boot and input. Everything else lives in its own module. */
+(function (WA) {
+  'use strict';
+  const U = WA.util;
+  const $ = U.el;
+
+  function show(t) {
+    document.body.classList.toggle('editing', t === 'edit');
+    document.body.classList.toggle('forging', t === 'forge');
+    document.body.classList.toggle('benching', t === 'bench');
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('sel', b.dataset.t === t));
+    if (t === 'edit') WA.editor.renderEd();
+    if (t === 'forge') { WA.forge.fillForge(); if (WA.authoring && WA.authoring.browse) WA.authoring.browse(); }
+    if (t === 'bench' && WA.bench) WA.bench.show();
+  }
+  WA.ui = { show };
+
+  function bindPlay() {
+    // D-pad: one step on touch, repeat while held.
+    document.querySelectorAll('button[data-d]').forEach(b => {
+      const step = () => {
+        const parts = b.dataset.d.split(',').map(Number);
+        WA.turn.playerMove(parts[0], parts[1]);
+      };
+      let hold = null, repeat = null;
+      const stop = () => {
+        clearTimeout(hold); clearInterval(repeat);
+        hold = repeat = null;
+        b.classList.remove('held');
+      };
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        step();
+        b.classList.add('held');
+        hold = setTimeout(() => { repeat = setInterval(step, 140); }, 340);
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+      b.addEventListener('contextmenu', e => e.preventDefault());
+    });
+
+    document.querySelector('[data-k="pip"]').addEventListener('click', () => WA.pip.toggle());
+    document.querySelector('[data-k="fire"]').addEventListener('click', () => WA.combat.fire());
+    document.querySelector('[data-k="throw"]').addEventListener('click', () => WA.combat.throwItem());
+    document.querySelector('[data-k="vats"]').addEventListener('click', () => WA.vats.toggle());
+    document.querySelector('[data-k="wait"]').addEventListener('click', () => WA.turn.wait());
+
+    // Every panel is a fixed modal over the map on small screens. The backdrop
+    // blocks stray movement taps and gives touch users a way to dismiss one.
+    const MODALS = ['pip', 'chargen', 'vats', 'dlg', 'trade', 'pick', 'loot', 'lock', 'hack', 'gamble', 'ending', 'death'];
+    const back = $('modalback');
+    const modalOpen = () => MODALS.some(id => { const el = $(id); return !!el && !el.hidden; });
+    const syncModal = () => {
+      const open = modalOpen();
+      if (back) back.hidden = !open;
+      document.body.classList.toggle('modal-open', open);
+    };
+    if (typeof MutationObserver !== 'undefined') {
+      const obs = new MutationObserver(syncModal);
+      MODALS.forEach(id => { const el = $(id); if (el) obs.observe(el, { attributes: true, attributeFilter: ['hidden'] }); });
+    }
+    syncModal();
+
+    const dismissModal = () => {
+      // Character creation and death require an explicit choice.
+      if (WA.traits && WA.traits.isOpen()) return;
+      if (WA.death && WA.death.isOpen()) return;
+      if (WA.ending && WA.ending.isOpen()) return WA.ending.close();
+      if (WA.trade && WA.trade.isOpen()) return WA.trade.close();
+      if (WA.pick && WA.pick.isOpen()) return WA.pick.close();
+      if (WA.loot && WA.loot.isOpen()) return WA.loot.close();
+      if (WA.lockpick && WA.lockpick.isOpen()) return WA.lockpick.close();
+      if (WA.hacking && WA.hacking.isOpen()) return WA.hacking.close();
+      if (WA.gambling && WA.gambling.isOpen()) return WA.gambling.close();
+      if (WA.dlg && WA.dlg.isOpen()) return WA.dlg.close();
+      if (WA.pip && WA.pip.isOpen()) return WA.pip.close();
+      if (!$('vats').hidden) return WA.vats.toggle();
+    };
+    // A panel can open during the D-pad's pointerdown. The click that follows
+    // is then retargeted to the new backdrop, which would dismiss the panel
+    // instantly. Only dismiss a click that actually began on the backdrop.
+    let backHit = false;
+    if (back) {
+      back.addEventListener('pointerdown', () => { backHit = true; });
+      back.addEventListener('pointercancel', () => { backHit = false; });
+      back.addEventListener('click', ev => {
+        if (!backHit) return;
+        backHit = false;
+        ev.preventDefault();
+        ev.stopPropagation();
+        dismissModal();
+      });
+    }
+
+    $('bar').onclick = () => WA.pip.toggle();
+
+    $('pip').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.tab) WA.pip.setTab(b.dataset.tab);
+      else if (b.dataset.diff) { WA.settings.setDifficulty(b.dataset.diff); WA.pip.render(); }
+      else if (b.dataset.travel) WA.pip.travelTo(b.dataset.travel);
+      else if (b.dataset.track) { WA.quests.track(b.dataset.track); WA.pip.render(); }
+      else if (b.dataset.eq) WA.inv.equip(b.dataset.eq);
+      else if (b.dataset.dropammo) WA.inv.dropAmmo(b.dataset.dropammo, 10);
+      else if (b.dataset.drop) WA.inv.drop(b.dataset.drop);
+      else if (b.dataset.end) WA.ending.open();
+      else if (b.dataset.sp) WA.char.raise(b.dataset.sp);
+      else if (b.dataset.sk) WA.skills.spend(b.dataset.sk);
+      else if (b.dataset.tag) WA.skills.tag(b.dataset.tag);
+      else if (b.dataset.perk) WA.perks.take(b.dataset.perk);
+      else if (b.dataset.use) WA.inv.use(b.dataset.use, b.dataset.slot);
+      else if (b.dataset.ammo) WA.inv.cycleAmmo();
+      else if (b.dataset.field) WA.field.act(b.dataset.field, b.dataset.x, b.dataset.y, b.dataset.slot);
+      else if (b.dataset.rest) WA.rest.act(b.dataset.rest);
+      else if (b.dataset.pcmd) WA.party.act('cmd:' + b.dataset.pcmd);
+      else if (b.dataset.pstim) WA.party.act('stim:' + b.dataset.pstim);
+      else if (b.dataset.pdis) WA.party.act('dis:' + b.dataset.pdis);
+      else if (b.dataset.pgive) WA.party.act('give:' + b.dataset.pgive);
+      else if (b.dataset.ptake) WA.party.act('take:' + b.dataset.ptake);
+      else if (b.dataset.pmed) WA.party.act('med:' + b.dataset.pmed);
+      else if (b.dataset.g) WA.save.act(b.dataset.g);
+    });
+
+    $('dlg').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (b && b.dataset.i != null) WA.dlg.pick(/^\d+$/.test(b.dataset.i) ? +b.dataset.i : b.dataset.i);
+    });
+
+    $('trade').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.steal) WA.trade.steal(b.dataset.steal);
+      else if (b.dataset.buy) WA.trade.buy(b.dataset.buy);
+      else if (b.dataset.sell) WA.trade.sell(b.dataset.sell);
+      else if (b.dataset.sellammo) WA.trade.sellAmmo(b.dataset.sellammo, 10);
+      else if (b.dataset.tx) WA.trade.close();
+    });
+
+    $('pick').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.pick) WA.pick.steal(b.dataset.pick);
+      else if (b.dataset.px) WA.pick.close();
+    });
+
+    $('loot').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.li != null) WA.loot.take(+b.dataset.li);
+      else if (b.dataset.la) WA.loot.takeAll();
+      else if (b.dataset.lo) WA.loot.confirm();
+      else if (b.dataset.lx) WA.loot.close();
+    });
+
+    $('lock').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.lp != null) WA.lockpick.move(+b.dataset.lp);
+      else if (b.dataset.pt) WA.lockpick.tryPick();
+      else if (b.dataset.lx) WA.lockpick.close();
+    });
+
+    $('hack').addEventListener('click', e => {
+      // Words and brackets are single characters, not buttons.
+      const b = e.target.closest('button, [data-hw], [data-hb]');
+      if (!b) return;
+      if (b.dataset.hw != null) WA.hacking.pick(+b.dataset.hw);
+      else if (b.dataset.hb != null) WA.hacking.useBracket(+b.dataset.hb);
+      else if (b.dataset.hx) WA.hacking.close();
+    });
+
+    $('gamble').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.gwager != null) WA.gambling.setWager(b.dataset.gwager);
+      else if (b.dataset.gbet != null) WA.gambling.setBet(+b.dataset.gbet);
+      else if (b.dataset.groll != null) WA.gambling.play();
+    });
+
+    // One close control for every dismissible panel. Character creation and
+    // death do not use it because they require an explicit choice.
+    document.addEventListener('click', e => {
+      const b = e.target.closest('[data-close]');
+      if (!b) return;
+      const name = b.dataset.close;
+      if (name === 'pip') WA.pip.close();
+      else if (name === 'dlg') { WA.dlg.close(); WA.view.draw(); }
+      else if (name === 'trade') WA.trade.close();
+      else if (name === 'pick') WA.pick.close();
+      else if (name === 'loot') WA.loot.close();
+      else if (name === 'lock') WA.lockpick.close();
+      else if (name === 'hack') WA.hacking.close();
+      else if (name === 'gamble') WA.gambling.close();
+      else if (name === 'vats') WA.vats.close();
+      else if (name === 'ending') WA.ending.close();
+      else return;
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    document.querySelectorAll('#tabs button').forEach(b => { b.onclick = () => show(b.dataset.t); });
+
+    const KEYS = { ArrowUp: [0, -1], w: [0, -1], ArrowDown: [0, 1], s: [0, 1], ArrowLeft: [-1, 0], a: [-1, 0], ArrowRight: [1, 0], d: [1, 0] };
+    addEventListener('keydown', ev => {
+      if (/editing|forging|benching/.test(document.body.className)) return;
+      if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
+      if (!WA.game.S) return;
+      if (WA.traits && WA.traits.isOpen()) return;
+      if (WA.ending && WA.ending.isOpen()) {
+        if (ev.key === 'Escape') { ev.preventDefault(); WA.ending.close(); }
+        return;
+      }
+      // While a lock is open the arrows work the pin, not the player.
+      if (WA.lockpick && WA.lockpick.isOpen()) {
+        if (ev.key === 'ArrowLeft' || ev.key === 'a') { ev.preventDefault(); WA.lockpick.move(-1); }
+        else if (ev.key === 'ArrowRight' || ev.key === 'd') { ev.preventDefault(); WA.lockpick.move(1); }
+        else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); WA.lockpick.tryPick(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); WA.lockpick.close(); }
+        return;
+      }
+      if (WA.hacking && WA.hacking.isOpen()) {
+        if (/^[1-9]$/.test(ev.key)) { ev.preventDefault(); WA.hacking.pick(+ev.key - 1); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); WA.hacking.close(); }
+        return;
+      }
+      if (WA.gambling && WA.gambling.isOpen()) {
+        if (/^[1-4]$/.test(ev.key)) {
+          ev.preventDefault();
+          const bet = WA.gambling.BETS[+ev.key - 1];
+          if (bet != null) WA.gambling.setBet(bet);
+        } else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+          ev.preventDefault();
+          const side = ev.key === 'ArrowRight' ? 1 : -1;
+          const ids = WA.gambling.ORDER;
+          const at = ids.indexOf(WA.gambling.wager.id);
+          WA.gambling.setWager(ids[(at + side + ids.length) % ids.length]);
+        } else if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          WA.gambling.play();
+        } else if (ev.key === 'Escape') {
+          ev.preventDefault();
+          WA.gambling.close();
+        }
+        return;
+      }
+      if (WA.pick && WA.pick.isOpen()) {
+        if (ev.key === 'Escape') { ev.preventDefault(); WA.pick.close(); }
+        return;
+      }
+      if (WA.trade && WA.trade.isOpen()) {
+        if (ev.key === 'Escape') { ev.preventDefault(); WA.trade.close(); }
+        return;
+      }
+      if (KEYS[ev.key]) { ev.preventDefault(); WA.turn.playerMove(KEYS[ev.key][0], KEYS[ev.key][1]); }
+      else if (ev.key === ' ') { ev.preventDefault(); WA.turn.wait(); }
+      else if (ev.key === 'h') WA.inv.stim();
+      else if (ev.key === 'r') WA.inv.use('radaway');
+      else if (ev.key === 'f') WA.combat.fire();
+      else if (ev.key === 'g') WA.combat.throwItem();
+      else if (ev.key === 'v') WA.vats.toggle();
+      else if (ev.key === 'p') { ev.preventDefault(); WA.pip.toggle(); }
+      else if (ev.key === 'Escape') {
+        if (WA.hacking && WA.hacking.isOpen()) WA.hacking.close();
+        else if (WA.pick && WA.pick.isOpen()) WA.pick.close();
+        else if (WA.loot && WA.loot.isOpen()) WA.loot.close();
+        else if (WA.dlg && WA.dlg.isOpen()) WA.dlg.close();
+        else if (!$('vats').hidden) WA.vats.toggle();
+        else WA.pip.close();
+        WA.view.draw();
+      }
+    });
+  }
+
+  /* Offline support plus the update banner. Service workers need http(s);
+     opening index.html from disk still plays, it just has no cache. */
+  let swapping = false;
+
+  function askVersion(worker) {
+    return new Promise(resolve => {
+      const ch = new MessageChannel();
+      const timer = setTimeout(() => resolve(''), 1500);
+      ch.port1.onmessage = e => { clearTimeout(timer); resolve((e.data && e.data.version) || ''); };
+      try { worker.postMessage({ type: 'VERSION' }, [ch.port2]); }
+      catch (err) { clearTimeout(timer); resolve(''); }
+    });
+  }
+
+  /* A freshly installed worker waits until the player agrees to reload. */
+  function offerUpdate(worker) {
+    if (!worker || !navigator.serviceWorker.controller) return;
+    askVersion(worker).then(version => {
+      const bar = $('updatebar');
+      if (!bar) return;
+      $('updatetext').textContent = version && version !== WA.VERSION
+        ? `Build v${version} is ready — you are playing v${WA.VERSION}.`
+        : 'A new build is ready.';
+      bar.hidden = false;
+      $('updatebtn').onclick = () => {
+        swapping = true;
+        worker.postMessage({ type: 'SKIP_WAITING' });
+        // Safety net in case controllerchange never arrives.
+        setTimeout(() => { if (swapping) location.reload(); }, 1500);
+      };
+    });
+  }
+
+  function offline() {
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swapping) location.reload();
+    });
+
+    // updateViaCache 'none' so a bump to js/data/version.js is noticed too,
+    // not just a change to the worker script itself.
+    navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then(reg => {
+      // A worker from an earlier visit may already be waiting.
+      if (reg.waiting) offerUpdate(reg.waiting);
+
+      reg.addEventListener('updatefound', () => {
+        const fresh = reg.installing;
+        if (!fresh) return;
+        fresh.addEventListener('statechange', () => {
+          if (fresh.state === 'installed') offerUpdate(reg.waiting || fresh);
+        });
+      });
+
+      // Look for updates on load and whenever the player returns to the tab.
+      reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) reg.update().catch(() => {});
+      });
+    }).catch(() => {});
+  }
+
+  async function boot() {
+    offline();
+    WA.settings.init();
+    // Definitions shipped in js/data/defs-authored.js sit under the browser's
+    // Forge overrides, so a studio edit still wins.
+    if (WA.baked) WA.baked.apply(WA.AUTHORED_DEFS);
+    WA.forge.init();
+    // Authored quests and dialogue merge after Forge overrides load, so a saved
+    // entity edit cannot hide a hand-written quest branch. The authoring store
+    // is read first: it adds the jobs saved in this browser and takes pristine
+    // tree snapshots before the merge changes anything.
+    if (WA.authoring) WA.authoring.init();
+    WA.authored.apply();
+    WA.authored.log();
+    WA.bench.init();
+    if (WA.packUI) WA.packUI.init();
+    await WA.editor.init();
+    WA.vats.bind();
+    bindPlay();
+    show('play');
+
+    const opening = WA.save.init();
+    // Keep a neutral game shell behind the boot menu. New Game replaces this
+    // with a real (non-test) character; Load replaces it from a save record.
+    WA.game.newGame('vault', true);
+    await opening;
+    if (WA.menu) WA.menu.open({ intro: true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})(window.WA = window.WA || {});
