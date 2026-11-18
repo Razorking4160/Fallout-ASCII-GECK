@@ -857,16 +857,16 @@
       // repair job rather than a wall.
       bypass: { name: 'Route 9 Bypass', amb: 0.6, indoor: false, weather: 'rain', rows: [
         "##########################",
-        "#........................#",
-        "#..▬.....♨........!......#",
+        "#.........=..............#",
+        "#..▬d...c♨q.......!......#",
         "#·········≡······R·······#",
-        "#>@·······≡·············>#",
+        "#>@·······≡&············>#",
         "#·········≡·······c······#",
         "#........................#",
         "#..~~....g..........c....#",
-        "#..~~.......▬..........r.#",
+        "#..~~.......▬.d........r.#",
         "#........................#",
-        "#..$.....!......%........#",
+        "#..$.....!......%......c.#",
         "#........................#",
         "##########################"
       ], exits: { '1,4': 'ruins', '24,4': 'pumphouse' } },
@@ -874,15 +874,15 @@
       // when the pumps stopped.
       pumphouse: { name: 'Flooded Pumphouse', amb: 0.14, indoor: true, weather: 'none', rows: [
         "####################",
-        "#..................#",
+        "#...............=..#",
         "#..~~..............#",
-        "#...≈≈...c.........#",
-        "#..................#",
+        "#.&.≈≈...c.........#",
+        "#......v...........#",
         ">.........◍........#",
         "#..............F...#",
         "#.....r......r.....#",
-        "#..$...............#",
-        "#..................#",
+        "#...g.............%#",
+        "#.c............n...#",
         "####################"
       ], exits: { '0,5': 'bypass' } }
     },
@@ -902,7 +902,7 @@
   };
 
   // Legacy symbol -> ID table. Kept so old text maps and old saved Forge data still load.
-  const LEG = { '#': 'wall', '.': 'floor', '+': 'door', '/': 'door_open', T: 'terminal', '~': 'rad_puddle', '>': 'exit', r: 'radroach', g: 'feral_ghoul', P: 'protectron', $: 'caps', '!': 'stimpak', '%': 'radaway', '&': 'repair_kit', '=': 'ammo_10mm', '^': 'ammo_ecell', b: 'baseball_bat', p: 'pistol_10mm', l: 'laser_pistol', a: 'leather_armor', A: 'combat_armor', S: 'rust_sentinel', U: 'yao_guai', 'ς': 'radscorpion_matriarch', N: 'mira', V: 'vale', K: 'keeper', 'ƒ': 'fence', '⚙': 'generator_broken', R: 'raider', w: 'clean_water', x: 'toxic_waste', o: 'nuka_cola', f: 'cram', m: 'irradiated_meat', k: 'vault_key', B: 'buffout', j: 'jet', M: 'medx', '*': 'grenade', i: 'molotov', c: 'crate', C: 'mira_cache', F: 'footlocker', n: 'bobby_pin', G: 'strongbox', L: 'market_lockbox', H: 'safe', D: 'secure_door', '♦': 'dealer', 'Ω': 'rook', 'λ': 'vera', 'ʘ': 'ash', 'Ʀ': 'raider_rivet', '·': 'road', '≡': 'bridge_broken', '≈': 'pump_broken', '▬': 'wrecked_car', '♨': 'campfire', '◍': 'glowing_fungus' };
+  const LEG = { '#': 'wall', '.': 'floor', '+': 'door', '/': 'door_open', T: 'terminal', '~': 'rad_puddle', '>': 'exit', r: 'radroach', g: 'feral_ghoul', d: 'feral_dog', q: 'raider_gunner', v: 'mirelurk', P: 'protectron', $: 'caps', '!': 'stimpak', '%': 'radaway', '&': 'repair_kit', '=': 'ammo_10mm', '^': 'ammo_ecell', b: 'baseball_bat', p: 'pistol_10mm', l: 'laser_pistol', a: 'leather_armor', A: 'combat_armor', S: 'rust_sentinel', U: 'yao_guai', 'ς': 'radscorpion_matriarch', N: 'mira', V: 'vale', K: 'keeper', 'ƒ': 'fence', '⚙': 'generator_broken', R: 'raider', w: 'clean_water', x: 'toxic_waste', o: 'nuka_cola', f: 'cram', m: 'irradiated_meat', k: 'vault_key', B: 'buffout', j: 'jet', M: 'medx', '*': 'grenade', i: 'molotov', c: 'crate', C: 'mira_cache', F: 'footlocker', n: 'bobby_pin', G: 'strongbox', L: 'market_lockbox', H: 'safe', D: 'secure_door', '♦': 'dealer', 'Ω': 'rook', 'λ': 'vera', 'ʘ': 'ash', 'Ʀ': 'raider_rivet', '·': 'road', '≡': 'bridge_broken', '≈': 'pump_broken', '▬': 'wrecked_car', '♨': 'campfire', '◍': 'glowing_fungus' };
 
   WA.GAME = GAME;
   WA.LEG = LEG;
