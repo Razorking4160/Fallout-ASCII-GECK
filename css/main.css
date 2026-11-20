@@ -1,8 +1,11 @@
 /* Layout, HUD, panels, controls and the editor/forge forms. */
-:root{--bg:#dfeed6;--panel:#cfe3c3;--fg:#1c4a1c;--dim:#4d704d;--hero:#071f07;--bad:#a3281a;--warn:#7d5200;--good:#10700e;--glow:none;
+/* Phosphate green on black is the look, so dark is the default no matter what
+   the device's appearance is set to, and color-scheme keeps the browser's own
+   chrome (scrollbars, form controls, overscroll) dark as well. The light palette
+   is still there for anyone who sets data-theme="light" on the root. */
+:root{--bg:#040904;--panel:#0a150a;--fg:#33ff66;--dim:#4fae68;--hero:#e2ffe9;--bad:#ff5a4a;--warn:#ffc24a;--good:#7dff9a;--glow:0 0 4px currentColor;color-scheme:dark;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#040904;--panel:#0a150a;--fg:#33ff66;--dim:#4fae68;--hero:#e2ffe9;--bad:#ff5a4a;--warn:#ffc24a;--good:#7dff9a;--glow:0 0 4px currentColor}}
-:root[data-theme="dark"]{--bg:#040904;--panel:#0a150a;--fg:#33ff66;--dim:#4fae68;--hero:#e2ffe9;--bad:#ff5a4a;--warn:#ffc24a;--good:#7dff9a;--glow:0 0 4px currentColor}
+:root[data-theme="light"]{--bg:#dfeed6;--panel:#cfe3c3;--fg:#1c4a1c;--dim:#4d704d;--hero:#071f07;--bad:#a3281a;--warn:#7d5200;--good:#10700e;--glow:none;color-scheme:light}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:ui-monospace,"SF Mono",Menlo,"Roboto Mono",Consolas,monospace;display:flex;justify-content:center;overflow-y:auto;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -276,5 +279,5 @@ body.modal-open{overflow:hidden}
   color:var(--warn);text-shadow:0 0 2px var(--panel),0 0 2px var(--panel),0 0 3px var(--panel)}
 #screen i.face-e::after{content:">";right:-.34em;top:50%;transform:translateY(-50%)}
 #screen i.face-w::after{content:"<";left:-.34em;top:50%;transform:translateY(-50%)}
-#screen i.face-n::after{content:"^";left:50%;top:-.46em;transform:translateX(-50%)}
-#screen i.face-s::after{content:"v";left:50%;bottom:-.46em;transform:translateX(-50%)}
+#screen i.face-n::after{content:"^";left:50%;top:-.4em;transform:translateX(-50%)}
+#screen i.face-s::after{content:"v";left:50%;bottom:-.4em;transform:translateX(-50%)}

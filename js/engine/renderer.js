@@ -39,10 +39,10 @@
   function fitGrid(cols, rows, availW) {
     const sc = U.el('screen');
     if (!sc) return;
-    // Cell box ratios come from --cw / --ch in terminal.css: the cell is wider
-    // and taller than the glyph, which leaves the facing chevron its own space.
+    // Square cells: --cw and --ch are both 1em in terminal.css, so the box is
+    // slightly wider and taller than its glyph and the facing chevron has room.
     const availH = availHeight();
-    const size = Math.min(availW / (cols * 0.95), availH / (rows * 1.15), 28);
+    const size = Math.min(availW / cols, availH / rows, 28);
     const px = Math.max(8, Math.round(size * 10) / 10) + 'px';
     if (sc.style.fontSize !== px) sc.style.fontSize = px;
   }
