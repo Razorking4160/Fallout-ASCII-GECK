@@ -62,11 +62,16 @@
     const owner = ownerOf(KEY);
     const day = WA.time.day(s);
     const lifted = !!owner && typeof st.lifted === 'number' && st.lifted >= day;
+    const watched = owner && WA.trade && WA.trade.watchers
+      ? WA.trade.watchers(s, owner).map(w => w.e.d.name) : [];
     const head = `<div class="prow"><span class="hero">${U.esc(String(st.n).toUpperCase())}</span>` +
       `<span class="acts"><small class="dim">${PENDING ? 'UNOPENED' : `${st.it.length} item${st.it.length === 1 ? '' : 's'}`}${owner ? ' · OWNED' : ''}</small>` +
       `<button class="closex" data-close="loot" aria-label="Close container">×</button></span></div>` +
       trapLine(KEY) +
       (owner ? `<div class="dim" style="font-size:12px">Owned by ${U.esc(ownerName(owner))}. Taking anything needs a Steal check.</div>` : '') +
+      (owner ? `<div class="dim" style="font-size:12px">${watched.length
+        ? 'Watched by ' + U.esc(watched.join(', ')) + '.'
+        : 'Nobody is watching this room.'}</div>` : '') +
       (lifted ? `<div class="dlgcheck">${U.esc(ownerName(owner))} is watching this container until tomorrow.</div>` : '') +
       (MSG ? `<div class="dlgcheck">${U.esc(MSG)}</div>` : '');
     if (PENDING) {
@@ -221,7 +226,8 @@
     const r = res.result;
     MSG = `${r.name} ${r.difficulty}: ${r.chance}% (rolled ${r.roll}) — ${r.success ? 'success' : 'failure'}.`;
     if (!res.ok) {
-      st.lifted = day;
+      // Only a witnessed fumble shuts the box for the day.
+      if (res.caught && res.caught.seen) st.lifted = day;
       MSG += ' ' + (res.caught ? res.caught.msg : 'CAUGHT.');
       return false;
     }

@@ -26,39 +26,29 @@
     return (n.terrain && terrains()[n.terrain]) || null;
   }
 
-  /* Weighted trouble for a destination: the place's own regulars carry weight 2
-     each and its terrain adds the rest, so a route keeps the character of both.
-     Older world data with no terrains falls back to the plain road list. */
-  function weights(id) {
+  /* A destination's weighted trouble: its terrain's pool, or the place's own
+     road list for world data that names no terrain. Pools are [enemy, weight]
+     pairs; a plain id counts once. */
+  function pool(id) {
     const n = nodes()[id] || {};
-    const out = {};
-    const add = (e, w) => { if (e && WA.GAME.entities[e]) out[e] = (out[e] || 0) + w; };
-    for (const e of (Array.isArray(n.road) ? n.road : [])) add(e, 2);
     const t = terrain(id);
-    for (const row of (t && Array.isArray(t.pool) ? t.pool : [])) {
-      if (Array.isArray(row)) add(row[0], Math.max(1, Math.round(+row[1]) || 1));
-      else add(row, 1);
+    const rows = t ? t.pool : n.road;
+    const w = {};
+    for (const row of (Array.isArray(rows) ? rows : [])) {
+      const e = Array.isArray(row) ? row[0] : row;
+      const weight = Array.isArray(row) ? Math.max(1, Math.round(+row[1]) || 1) : 1;
+      if (e && WA.GAME.entities[e]) w[e] = (w[e] || 0) + weight;
     }
-    return out;
-  }
-
-  /* A destination's whole table, ready to draw from. */
-  function table(id) {
-    const w = weights(id);
     const ids = Object.keys(w);
-    return { w, ids, total: ids.reduce((n, e) => n + w[e], 0) };
+    return { w, ids, total: ids.reduce((sum, e) => sum + w[e], 0) };
   }
 
-  /* One weighted draw from a destination's table, or null when it is empty. */
-  function pick(id) {
-    const t = table(id);
-    if (!t.total) return null;
-    let roll = Math.random() * t.total;
-    for (const e of t.ids) {
-      roll -= t.w[e];
-      if (roll < 0) return e;
-    }
-    return t.ids[t.ids.length - 1];
+  /* One weighted draw from a pool, or null when it is empty. */
+  function pick(p) {
+    if (!p.total) return null;
+    let roll = Math.random() * p.total;
+    for (const e of p.ids) if ((roll -= p.w[e]) < 0) return e;
+    return p.ids[p.ids.length - 1];
   }
 
   /* Roads in both directions, with their travel time in hours. */
@@ -111,16 +101,11 @@
 
   /* A short read, straight from the data, on which ground is the worst. */
   function dangerLine() {
-    const list = Object.keys(terrains())
+    const worst = Object.keys(terrains())
       .map(id => terrains()[id])
       .filter(t => t && +t.danger > 1)
-      .sort((a, b) => (+b.danger) - (+a.danger))
-      .slice(0, 2)
-      .map(t => t.name);
-    if (!list.length) return '';
-    return list.length === 2
-      ? `Trouble weighs heavier in ${list[0]} and ${list[1]}.`
-      : `Trouble weighs heavier in ${list[0]}.`;
+      .sort((a, b) => +b.danger - +a.danger)[0];
+    return worst ? `Trouble weighs heaviest in ${worst.name}.` : '';
   }
 
   function danger(s) {
@@ -231,12 +216,13 @@
     // the destination's terrain table mixed with that place's own regulars.
     const t = terrain(to);
     const ground = t ? t.name : 'the road';
+    const trouble = pool(to);
     let ambush = null;
-    if (table(to).total && Math.random() * 100 < encounterChance(hours, out, to)) {
+    if (trouble.total && Math.random() * 100 < encounterChance(hours, out, to)) {
       const dodge = WA.skills.checkResult('outdoorsman', 35);
       if (dodge.success) {
         WA.game.say(`Outdoorsman ${dodge.skill}% (rolled ${dodge.roll}): you spot trouble on ${ground} and slip past it.`);
-      } else ambush = pick(to);
+      } else ambush = pick(trouble);
     }
 
     WA.time.advance(s, hours * 60);
@@ -258,7 +244,6 @@
   }
 
   WA.overworld = {
-    nodes, terrains, terrain, weights, table, pick, roads, plan, chart, html,
-    travelTo, encounterChance
+    nodes, terrain, roads, plan, chart, html, travelTo, encounterChance
   };
 })(window.WA = window.WA || {});

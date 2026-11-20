@@ -16,7 +16,11 @@
    those units stolen (S.hot, per item and per owner), while a bad one means
    lost trust, a wider reputation and, for a trader, a fine and a shut stall.
    The same roll serves pickpocketing and owned containers. Merchants will not
-   buy back their own stolen stock. */
+   buy back their own stolen stock.
+
+   A fumble only counts when someone can see it: the owner, or a talker in
+   sight with a clear line, and light, distance and a crouch decide whether a
+   bystander notices. A lift nobody saw costs the attempt and nothing else. */
 (function (WA) {
   'use strict';
   const U = WA.util;
@@ -266,6 +270,40 @@
     return 12;
   }
 
+  /* Would this person catch the movement? Distance, light and a crouch decide
+     it; the owner standing over their own stock is not rolled for. */
+  function notices(s, e, dist) {
+    const light = typeof s.stealthLight === 'number' ? s.stealthLight
+      : (WA.light && WA.light.stealth ? WA.light.stealth(s) : 0.5);
+    const chance = Math.max(5, Math.min(95,
+      80 - Math.max(0, dist - 2) * 10 + Math.round((light - 0.5) * 30) - (s.sneak ? 18 : 0)));
+    return Math.random() * 100 < chance;
+  }
+
+  /* Everyone who could see the theft at all: the owner (if on this map) and
+     other talkers in sight with a clear line. Companions are accomplices. */
+  function watchers(s, id) {
+    s = s || S();
+    const out = [];
+    for (const e of (s && s.ents) || []) {
+      if (!e || !e.d || e.dead || e.hp <= 0 || e.d.ally) continue;
+      const victim = e.id === id;
+      if (!victim && (!e.d.talk || e.d.c === 'bad')) continue;
+      const dist = U.cheb(e.x, e.y, s.px, s.py);
+      if (dist > (e.d.sight || 6) + (victim ? 2 : 0)) continue;
+      if (dist > 1 && !(WA.vis && WA.vis.los(e.x, e.y, s.px, s.py))) continue;
+      out.push({ e, dist, victim });
+    }
+    return out;
+  }
+
+  /* The watchers who actually notice. Being adjacent always counts. */
+  function witnesses(s, id) {
+    return watchers(s, id)
+      .filter(w => w.victim || w.dist <= 1 || notices(s, w.e, w.dist))
+      .map(w => w.e);
+  }
+
   /* Better goods are harder to lift; a watchful owner and a known thief make
      it worse, and keeping low while sneaking helps a little. Something in their
      hands (`held`) or a container you have to search adds to the difficulty. */
@@ -293,6 +331,13 @@
      close again today. Used by shelves, pockets and owned containers. */
   function caughtBy(id, s, kind) {
     s = s || S();
+    const where = kind === 'pocket' ? 'pocket' : kind === 'container' ? 'lockbox' : 'stock';
+    const seen = witnesses(s, id);
+    // A fumble nobody saw is only a fumble: no fine, no notoriety, no ban.
+    if (!seen.length) {
+      say(`Your hand slips at the ${where}, but no one is close enough to see it.`);
+      return { fine: 0, msg: 'UNSEEN — the lift failed, and nobody saw it.', waryDay: 0, seen: 0 };
+    }
     const st = merchant(id) ? state(id, s) : null;
     const prior = st ? st.caught | 0 : 0;
     let fine = 0;
@@ -320,17 +365,20 @@
       m.flags.thief = 1;
       m.waryDay = Math.max(m.waryDay | 0, WA.time.day(s));
     }
-    const where = kind === 'pocket' ? 'pocket' : kind === 'container' ? 'lockbox' : 'stock';
-    say(`${nameOf(id)} catches your hand in the ${where}.` +
-      (st ? (fine ? ` You pay ${fine} caps to keep the peace.` : ' You have no caps to settle it with.')
-        : ' They keep their distance for the rest of the day.') +
-      (st ? ' The stall shuts until tomorrow.' : ''));
+    const other = seen.find(e => e.id !== id);
+    say(seen.some(e => e.id === id)
+      ? `${nameOf(id)} catches your hand in the ${where}.`
+      : `${nameOf(other.id)} sees your hand in the ${where} and calls it out.`);
+    say(st
+      ? (fine ? `You pay ${fine} caps to keep the peace.` : 'You have no caps to settle it with.') +
+        ' The stall shuts until tomorrow.'
+      : 'They keep their distance for the rest of the day.');
     if (s.notoriety > before) say('Word travels. Every merchant will watch you more closely.');
     if (WA.save) WA.save.queueAutosave();
     const msg = st
       ? `CAUGHT — ${nameOf(id)} ${fine ? `fines you ${fine} caps and ` : ''}shuts the stall for the day.`
       : `CAUGHT — ${nameOf(id)} will not let you close for the rest of the day.`;
-    return { fine, msg, waryDay: m ? m.waryDay | 0 : 0 };
+    return { fine, msg, waryDay: m ? m.waryDay | 0 : 0, seen: seen.length };
   }
 
   /* One generic Steal roll. Callers hand over the goods and mark them stolen
@@ -720,7 +768,7 @@
   }
 
   WA.trade = { open, close, render, isOpen, buy, sell, sellAmmo, steal, value, factors, buyPrice: unitPrice, sellPrice: salePrice,
-    canSell, state, restock, restockIfNewDay, stockConds, stockCondText, merchant, isFence, stealChance, stealDiff, attempt, caughtBy,
+    canSell, state, restock, restockIfNewDay, stockConds, stockCondText, merchant, isFence, stealChance, stealDiff, attempt, caughtBy, watchers, witnesses,
     markStolen: markHot, give, watchOf, hot, hotFrom, banNotice,
     get npc() { return NPC; } };
 })(window.WA = window.WA || {});

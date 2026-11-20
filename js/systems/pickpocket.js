@@ -50,6 +50,8 @@
     const inWary = wary(id, s);
     const held = heldOf(id);
     const heat = s.notoriety | 0;
+    const others = (WA.trade && WA.trade.watchers ? WA.trade.watchers(s, id) : [])
+      .filter(w => w.e.id !== id).map(w => w.e.d.name);
     const rows = Object.keys(p).map(itemId => {
       const it = WA.GAME.items[itemId];
       const n = p[itemId] | 0;
@@ -71,6 +73,9 @@
       `<div class="prow"><span>POCKETS <b>${Object.keys(p).length}</b></span>` +
         `<span class="dim">${s.notoriety ? `Notoriety ${heat} · ` : ''}${WA.inv.weight()}/${WA.inv.capacity()} lbs</span></div>` +
       (heat ? `<div class="dim" style="font-size:12px">Notoriety ${heat}: pockets and shelves are harder to lift.</div>` : '') +
+      `<div class="dim" style="font-size:12px">${others.length
+        ? 'Other eyes: ' + U.esc(others.join(', ')) + '.'
+        : 'No one else is watching.'}</div>` +
       (inWary ? `<div class="dlgcheck">${U.esc(nameOf(id))} is watching you. No pockets until tomorrow.</div>` : '') +
       (MSG ? `<div class="dlgcheck">${U.esc(MSG)}</div>` : '') +
       `<div class="mlegend" style="margin-top:6px">CARRIED</div>` +

@@ -90,6 +90,7 @@
 /* 0.61.6: follows the game's Fallout ASCII rename and icon set. */
 /* 0.61.7: the authoring app is G.E.C.K., with its own G.E.C.K. icon set. */
 /* 0.62.0: terrain encounter tables synced from the game. */
+/* 0.63.0: witness-gated theft and the simplified encounter tables synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

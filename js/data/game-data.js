@@ -889,9 +889,10 @@
     // The overworld: places on the road map and the hours each road takes.
     // A node's `road` list is the pool of things that can follow you in there.
     world: {
-      // Terrain decides what trouble a road can throw at you. Each place names
-      // one; its weighted pool mixes with the place's own road list, and
-      // `danger` scales the chance of meeting anything at all.
+      // Terrain decides what trouble a road can throw at you: a place draws
+      // from its terrain's weighted pool (its own `road` list is only the
+      // fallback for a node with no terrain), and `danger` scales the chance of
+      // meeting anything at all.
       terrains: {
         vault: { name: 'the vault approach', danger: 0.6, pool: [['radroach', 3]] },
         open_road: { name: 'the open road', danger: 1, pool: [['feral_dog', 3], ['raider', 2], ['mole_rat', 1]] },
