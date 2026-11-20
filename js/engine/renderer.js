@@ -6,6 +6,19 @@
 
   const D = { CELLS: [], SIGS: [], NC: 0, NR: 0 };
 
+  /* The cell size follows the space the shell actually has. Sizing it from a
+     fixed CSS font-size made a wide map spill out of its panel on a phone. */
+  function fitGrid(cols, rows) {
+    const sc = U.el('screen'), app = U.el('app');
+    if (!sc) return;
+    const shellW = (app && app.clientWidth) || document.documentElement.clientWidth || 320;
+    const availW = Math.max(150, shellW - 38);
+    const availH = Math.max(110, (window.innerHeight || 640) - 330);
+    const size = Math.min(availW / (cols * 0.85), availH / (rows * 0.85), 28);
+    const px = Math.max(8, Math.round(size * 10) / 10) + 'px';
+    if (sc.style.fontSize !== px) sc.style.fontSize = px;
+  }
+
   function ensureCells(cols, rows) {
     if (cols === D.NC && rows === D.NR) return;
     D.NC = cols; D.NR = rows;
@@ -123,6 +136,7 @@
     const cy = Math.max(0, Math.min(S.h - VH, S.py - (VH >> 1)));
     const vis = S.vis || WA.vis.compute(S);
     const light = S.light || WA.light.compute(S);
+    fitGrid(cols, rows);
     ensureCells(cols, rows);
 
     for (let vy = 0; vy < rows; vy++) {

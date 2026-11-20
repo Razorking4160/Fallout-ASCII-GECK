@@ -267,14 +267,14 @@ body.modal-open{overflow:hidden}
 .symgrid{display:flex;flex-wrap:wrap;gap:4px}
 .symbtn{width:32px;height:32px;font-size:17px;padding:0;border-radius:4px}
 
-/* Facing: a small caret on the cell of a character, pointing where they aim.
-   The player's caret is solid; an NPC's is dimmer so the grid stays calm.
-   The caret sits inside the cell and the cell is lifted above its neighbours,
-   so a left or right caret cannot be painted over by the next cell's glyph. */
+/* Facing: an arrow on the cell of a character, pointing where they aim. The
+   player's arrow is solid; an NPC's is dimmer so the grid stays calm. It is a
+   glyph rather than a CSS triangle so it reads at phone cell sizes, and the
+   cell is lifted above its neighbours so a sideways arrow is never covered. */
 #screen i.face{position:relative;z-index:1}
-#screen i.face::after{content:"";position:absolute;width:0;height:0;border:.22em solid transparent;opacity:.9;pointer-events:none}
-#screen i.face-n::after{top:0;left:50%;margin-left:-.22em;border-bottom-color:currentColor;border-top-width:0}
-#screen i.face-e::after{right:0;top:50%;margin-top:-.22em;border-left-color:currentColor;border-right-width:0}
-#screen i.face-s::after{bottom:0;left:50%;margin-left:-.22em;border-top-color:currentColor;border-bottom-width:0}
-#screen i.face-w::after{left:0;top:50%;margin-top:-.22em;border-right-color:currentColor;border-left-width:0}
+#screen i.face::after{position:absolute;font-size:.62em;line-height:1;opacity:.8;pointer-events:none;text-shadow:0 0 2px currentColor}
+#screen i.face-n::after{content:"▲";top:-.1em;left:50%;margin-left:-.31em}
+#screen i.face-s::after{content:"▼";bottom:-.12em;left:50%;margin-left:-.31em}
+#screen i.face-e::after{content:"▶";right:-.08em;top:50%;margin-top:-.31em}
+#screen i.face-w::after{content:"◀";left:-.08em;top:50%;margin-top:-.31em}
 #screen i.face.hero::after{opacity:1}

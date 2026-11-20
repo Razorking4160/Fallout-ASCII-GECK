@@ -93,6 +93,7 @@
 /* 0.63.0: witness-gated theft and the simplified encounter tables synced from the game. */
 /* 0.64.0: witness reactions, fumble cooldowns and facing synced from the game. */
 /* 0.64.1: even cell spacing and NPC facings synced from the game. */
+/* 0.64.2: fitted grid and arrow facings synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
