@@ -428,7 +428,9 @@
   }
 
   // Detection chance for one enemy. Light and recent movement make noise;
-  // distance gives a small bonus. Adjacent enemies always notice.
+  // distance gives a small bonus. Adjacent enemies always notice. Turning your
+  // back on an enemy hides your face and Pip-Boy lamp, so it is easier to stay
+  // unseen; facing it is easier for them.
   function sneakChance(e, dist) {
     const s = S();
     if (!s || !s.sneak) return 0;
@@ -437,10 +439,13 @@
     if (d <= 1) return 0;
     const light = typeof s.stealthLight === 'number' ? s.stealthLight :
       (WA.light && WA.light.stealth ? WA.light.stealth(s) : 0.5);
+    const turned = e ? U.turnedFrom(s.face || 's', e.x - s.px, e.y - s.py) : false;
     const difficulty = 25 + sight * 2
       + (s.sneakMoved ? 15 : 0)
       + Math.round((light - 0.5) * 40)
-      - Math.max(0, d - 2) * 3;
+      - Math.max(0, d - 2) * 3
+      // A higher difficulty is harder to beat, so a turned back lowers it.
+      - (turned ? 12 : -8);
     return WA.skills.checkChance('sneak', Math.max(5, difficulty));
   }
 

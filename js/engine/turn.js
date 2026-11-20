@@ -1,6 +1,7 @@
 /* Turn handling: one player action, then one world turn, then one redraw. */
 (function (WA) {
   'use strict';
+  const U = WA.util;
   const S = () => WA.game.S;
   // Browsing the Pip-Boy pauses the world: no world turn, no enemy actions.
   const paused = () => !!((WA.pip && WA.pip.isOpen()) || (WA.dlg && WA.dlg.isOpen()) ||
@@ -51,6 +52,8 @@
     if (WA.combat) WA.combat.initiative();
     if (s.dead || s.hp <= 0) return;
 
+    // You turn the way you push, even when the move itself is refused.
+    s.face = U.faceTo(dx, dy) || s.face || 's';
     const nx = s.px + dx, ny = s.py + dy;
     const e = tgt || WA.game.entAt(nx, ny);
     let used = true, search = '';

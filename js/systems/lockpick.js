@@ -62,6 +62,11 @@
     if (WA.dlg) WA.dlg.close();
     if (WA.loot) WA.loot.abort();
     KEY = k;
+    // You turn to the lock you are working on.
+    const [kx, ky] = String(k).split(',').map(Number);
+    if (Number.isFinite(kx) && Number.isFinite(ky)) {
+      s.face = WA.util.faceTo(kx - s.px, ky - s.py) || s.face || 's';
+    }
     POS = 4;
     TARGET = Math.floor(Math.random() * SLOTS);
     FEED = 'The lock is stiff.';

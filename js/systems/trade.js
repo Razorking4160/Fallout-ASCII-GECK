@@ -271,12 +271,15 @@
   }
 
   /* Would this person catch the movement? Distance, light and a crouch decide
-     it; the owner standing over their own stock is not rolled for. */
+     it, and a turned back hides your hands; the owner standing over their own
+     stock is not rolled for. */
   function notices(s, e, dist) {
     const light = typeof s.stealthLight === 'number' ? s.stealthLight
       : (WA.light && WA.light.stealth ? WA.light.stealth(s) : 0.5);
+    const turned = U.turnedFrom(s.face || 's', e.x - s.px, e.y - s.py);
     const chance = Math.max(5, Math.min(95,
-      80 - Math.max(0, dist - 2) * 10 + Math.round((light - 0.5) * 30) - (s.sneak ? 18 : 0)));
+      80 - Math.max(0, dist - 2) * 10 + Math.round((light - 0.5) * 30)
+      - (s.sneak ? 18 : 0) - (turned ? 22 : 0)));
     return Math.random() * 100 < chance;
   }
 
@@ -306,14 +309,17 @@
 
   /* Better goods are harder to lift; a watchful owner and a known thief make
      it worse, and keeping low while sneaking helps a little. Something in their
-     hands (`held`) or a container you have to search adds to the difficulty. */
+     hands (`held`) or a container you have to search adds to the difficulty.
+     An owner whose back is turned is easier to reach past. */
   function stealDiff(id, itemId, s, opts) {
     s = s || S();
     const o = opts || {};
+    const owner = ((s && s.ents) || []).find(e => e && e.id === id && e.d);
+    const back = owner && owner.face && U.turnedFrom(owner.face, s.px - owner.x, s.py - owner.y);
     return Math.max(5, Math.min(180,
       10 + Math.round(value(itemId) * 0.8) + (watchOf(id) | 0) +
       12 * ((s && s.notoriety) | 0) - (s && s.sneak ? 8 : 0) +
-      (o.held ? 25 : 0) + (o.kind === 'container' ? 8 : 0)));
+      (o.held ? 25 : 0) + (o.kind === 'container' ? 8 : 0) + (back ? -8 : 0)));
   }
   const stealChance = (id, itemId, s, opts) => (WA.skills ? WA.skills.checkChance('steal', stealDiff(id, itemId, s, opts)) : 0);
 
@@ -329,14 +335,55 @@
   /* Caught: lost trust, a wider reputation and time spent shut out. A trader
      also fines you and shuts the stall; anyone else simply refuses to let you
      close again today. Used by shelves, pockets and owned containers. */
-  function caughtBy(id, s, kind) {
+  function freeNear(s, x, y, r) {
+    for (let ring = 0; ring <= r; ring++) {
+      for (let dy = -ring; dy <= ring; dy++) {
+        for (let dx = -ring; dx <= ring; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+          if (WA.game.free(x + dx, y + dy)) return [x + dx, y + dy];
+        }
+      }
+    }
+    return null;
+  }
+
+  /* A witness who is not the owner does more than talk: a trader shouts for the
+     watch and a watchman arrives, anyone else turns on you with what they are
+     carrying. The definition is cloned onto the entity, so the same person
+     stays a shopkeeper or a quest giver on every other map. */
+  function react(s, witness) {
+    const d = witness && witness.d;
+    if (!s || !d) return '';
+    if (d.merchant) {
+      const base = WA.GAME.entities.bounty_hunter;
+      const spot = base && (freeNear(s, witness.x, witness.y, 3) || freeNear(s, s.px, s.py, 5));
+      if (!spot) { say(`${nameOf(witness.id)} shouts for the watch.`); return 'alarm'; }
+      s.ents.push({
+        x: spot[0], y: spot[1], id: 'bounty_hunter', hp: base.hp,
+        d: Object.assign({}, base, { talk: false, c: 'bad', name: 'Watchman' }),
+        slow: 0, cd: 0, weak: 0, last: null, fx: []
+      });
+      if (WA.game.rebuildOccupancy) WA.game.rebuildOccupancy();
+      say(`${nameOf(witness.id)} shouts for the watch. A watchman pushes through the crowd.`);
+      return 'guard';
+    }
+    witness.d = Object.assign({}, d, {
+      talk: false, c: 'bad', ai: d.ai && d.ai !== 'idle' ? d.ai : 'pursue'
+    });
+    say(`${nameOf(witness.id)} drops the act and comes at you.`);
+    return 'hostile';
+  }
+
+  function caughtBy(id, s, kind, key) {
     s = s || S();
     const where = kind === 'pocket' ? 'pocket' : kind === 'container' ? 'lockbox' : 'stock';
     const seen = witnesses(s, id);
-    // A fumble nobody saw is only a fumble: no fine, no notoriety, no ban.
+    // A fumble nobody saw is only a fumble, and it costs the one thing that
+    // still matters: time.
     if (!seen.length) {
+      if (key) setCooldown(s, key);
       say(`Your hand slips at the ${where}, but no one is close enough to see it.`);
-      return { fine: 0, msg: 'UNSEEN — the lift failed, and nobody saw it.', waryDay: 0, seen: 0 };
+      return { fine: 0, msg: 'UNSEEN — nobody saw it, but your hands need a turn to steady.', waryDay: 0, seen: 0, cooling: !!key };
     }
     const st = merchant(id) ? state(id, s) : null;
     const prior = st ? st.caught | 0 : 0;
@@ -365,14 +412,16 @@
       m.flags.thief = 1;
       m.waryDay = Math.max(m.waryDay | 0, WA.time.day(s));
     }
-    const other = seen.find(e => e.id !== id);
-    say(seen.some(e => e.id === id)
+    const victimSaw = seen.some(e => e.id === id);
+    say(victimSaw
       ? `${nameOf(id)} catches your hand in the ${where}.`
-      : `${nameOf(other.id)} sees your hand in the ${where} and calls it out.`);
+      : `${nameOf(seen[0].id)} sees your hand in the ${where} and calls it out.`);
     say(st
       ? (fine ? `You pay ${fine} caps to keep the peace.` : 'You have no caps to settle it with.') +
         ' The stall shuts until tomorrow.'
       : 'They keep their distance for the rest of the day.');
+    // A bystander who raised the alarm also acts on it.
+    if (!victimSaw) react(s, seen[0]);
     if (s.notoriety > before) say('Word travels. Every merchant will watch you more closely.');
     if (WA.save) WA.save.queueAutosave();
     const msg = st
@@ -381,14 +430,35 @@
     return { fine, msg, waryDay: m ? m.waryDay | 0 : 0, seen: seen.length };
   }
 
+  /* An unwatched fumble costs real time: that container or pocket refuses a
+     second attempt until the world has taken one more turn. The panels pause
+     the turn, so the player has to close the panel and spend a turn to retry. */
+  function cooldownLeft(s, key) {
+    s = s || S();
+    const until = s && s.stealCd && s.stealCd[key];
+    return until > (s.turn | 0) ? until - (s.turn | 0) : 0;
+  }
+
+  function setCooldown(s, key) {
+    s = s || S();
+    if (!s) return;
+    s.stealCd = (s.stealCd && typeof s.stealCd === 'object') ? s.stealCd : {};
+    s.stealCd[key] = (s.turn | 0) + 1;
+    // Drop keys that have already expired so the save does not grow.
+    for (const k in s.stealCd) if (!(s.stealCd[k] > (s.turn | 0))) delete s.stealCd[k];
+  }
+
   /* One generic Steal roll. Callers hand over the goods and mark them stolen
-     only on success, so a failed container take leaves the loot inside. */
+     only on success, so a failed container take leaves the loot inside. A
+     `key` names the shelf, pocket or box for the unwatched-fumble cooldown. */
   function attempt(id, itemId, opts) {
     const o = opts || {};
     const s = o.state || S();
     if (!s || s.dead || !WA.skills) return { ok: false, result: null };
+    const wait = o.key ? cooldownLeft(s, o.key) : 0;
+    if (wait) return { ok: false, result: null, blocked: wait };
     const r = WA.skills.checkResult('steal', stealDiff(id, itemId, s, o));
-    if (!r.success) return { ok: false, result: r, caught: caughtBy(id, s, o.kind || 'shelf') };
+    if (!r.success) return { ok: false, result: r, caught: caughtBy(id, s, o.kind || 'shelf', o.key) };
     return { ok: true, result: r };
   }
 
@@ -768,7 +838,7 @@
   }
 
   WA.trade = { open, close, render, isOpen, buy, sell, sellAmmo, steal, value, factors, buyPrice: unitPrice, sellPrice: salePrice,
-    canSell, state, restock, restockIfNewDay, stockConds, stockCondText, merchant, isFence, stealChance, stealDiff, attempt, caughtBy, watchers, witnesses,
+    canSell, state, restock, restockIfNewDay, stockConds, stockCondText, merchant, isFence, stealChance, stealDiff, attempt, caughtBy, watchers, witnesses, cooldownLeft,
     markStolen: markHot, give, watchOf, hot, hotFrom, banNotice,
     get npc() { return NPC; } };
 })(window.WA = window.WA || {});

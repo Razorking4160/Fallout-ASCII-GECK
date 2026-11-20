@@ -88,6 +88,7 @@
       ? `<span class="wp" title="Waypoint — ${U.esc(wpt.name)} — ${U.esc(wpt.text)}">◉ ${U.esc(wpt.dist ? `${wpt.dist} ${wpt.dir}` : 'here')}</span>`
       : (off ? `<span class="wp off" title="Waypoint — ${U.esc(off.name)} — objective in ${U.esc(off.mapName)}">◉ ${U.esc(off.mapName)}</span>` : '');
     U.setHtml('bar', `<span class="clock">${U.esc(clock)}</span>` +
+      `<span class="dim" title="Facing ${U.esc(S.face || 's')}">${U.arrow(S.face || 's')}</span>` +
       `<span class="${S.hp <= hp * 0.3 ? 'bad' : ''}">HP ${S.hp}/${hp}</span><span>LV${S.lvl}${S.pts ? '*' : ''} ${S.lvl >= WA.scale.CAP ? 'MAX' : S.xp + '/' + WA.char.need()}</span><span>Caps ${S.caps}</span><span>Stim ${S.stims}</span>` +
       (rads ? `<span class="warn">RADS ${rads}</span>` : '') +
       (limb ? `<span class="bad">CRIPPLED ${U.esc(limb)}</span>` : '') +
@@ -134,8 +135,12 @@
         const v = vis[y] && vis[y][x];
         const e = v && WA.game.entAt(x, y);
         const it = v && S.items[x + ',' + y];
-        if (x === S.px && y === S.py) { ch = '@'; c = 'hero'; }
-        else if (e) { d = e.d || {}; ch = d.glyph || '?'; c = d.c || 'bad'; }
+        if (x === S.px && y === S.py) { ch = '@'; c = 'hero face face-' + (S.face || 's'); }
+        else if (e) {
+          d = e.d || {}; ch = d.glyph || '?';
+          // A tracked NPC carries the same caret, dimmer, so you can read who is looking where.
+          c = (d.c || 'bad') + (e.face ? ' face face-' + e.face : '');
+        }
         else if (it) {
           d = WA.GAME.items[it] || {};
           ch = d.glyph || '?';

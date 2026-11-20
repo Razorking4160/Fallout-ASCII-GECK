@@ -164,6 +164,8 @@
   /* One player hit. opts carries VATS modifiers: mul, cripple, weak, tag. */
   function playerAttack(e, opts) {
     const s = S(), o = opts || {};
+    // Aiming at someone turns you toward them, whether it is a bump or VATS.
+    if (e) s.face = WA.util.faceTo(e.x - s.px, e.y - s.py) || s.face || 's';
     const wp = WA.GAME.items[s.weapon] || {};
     const esp = WA.traits ? WA.traits.sp(s.sp) : s.sp;
     const crit = Math.random() < Math.min(0.95, esp.L * 0.02 +

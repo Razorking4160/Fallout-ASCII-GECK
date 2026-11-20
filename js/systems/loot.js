@@ -64,6 +64,8 @@
     const lifted = !!owner && typeof st.lifted === 'number' && st.lifted >= day;
     const watched = owner && WA.trade && WA.trade.watchers
       ? WA.trade.watchers(s, owner).map(w => w.e.d.name) : [];
+    const wait = owner && WA.trade && WA.trade.cooldownLeft
+      ? WA.trade.cooldownLeft(s, 'box:' + s.id + '|' + KEY) : 0;
     const head = `<div class="prow"><span class="hero">${U.esc(String(st.n).toUpperCase())}</span>` +
       `<span class="acts"><small class="dim">${PENDING ? 'UNOPENED' : `${st.it.length} item${st.it.length === 1 ? '' : 's'}`}${owner ? ' · OWNED' : ''}</small>` +
       `<button class="closex" data-close="loot" aria-label="Close container">×</button></span></div>` +
@@ -73,6 +75,7 @@
         ? 'Watched by ' + U.esc(watched.join(', ')) + '.'
         : 'Nobody is watching this room.'}</div>` : '') +
       (lifted ? `<div class="dlgcheck">${U.esc(ownerName(owner))} is watching this container until tomorrow.</div>` : '') +
+      (wait ? `<div class="dlgcheck">Steady your hands: ${wait} turn${wait === 1 ? '' : 's'} before another try.</div>` : '') +
       (MSG ? `<div class="dlgcheck">${U.esc(MSG)}</div>` : '');
     if (PENDING) {
       U.setHtml('loot', head +
@@ -221,7 +224,11 @@
       MSG = `Too heavy. You can carry ${WA.inv.capacity()} lbs.`;
       return false;
     }
-    const res = WA.trade.attempt(owner, id, { kind: 'container' });
+    const res = WA.trade.attempt(owner, id, { kind: 'container', key: 'box:' + s.id + '|' + KEY });
+    if (res.blocked) {
+      MSG = `Your hands are still unsteady — spend a turn before trying the ${String(st.n).toLowerCase()} again.`;
+      return false;
+    }
     if (!res.result) return false;
     const r = res.result;
     MSG = `${r.name} ${r.difficulty}: ${r.chance}% (rolled ${r.roll}) — ${r.success ? 'success' : 'failure'}.`;

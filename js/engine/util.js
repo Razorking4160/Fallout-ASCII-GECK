@@ -73,5 +73,19 @@
 
   U.cheb = (ax, ay, bx, by) => Math.max(Math.abs(ax - bx), Math.abs(ay - by));
 
+  /* ---- facing ----------------------------------------------------------
+     One compass letter per character. A character keeps the direction of its
+     last step or attack, and `turnedFrom` is true when that direction does not
+     point toward the given offset: side-on or back turned. */
+  const FACING = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
+  const ARROWS = { n: '▲', e: '▶', s: '▼', w: '◀' };
+  U.faceTo = (dx, dy) => !dx && !dy ? null
+    : Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'e' : 'w') : (dy > 0 ? 's' : 'n');
+  U.arrow = face => ARROWS[face] || ARROWS.s;
+  U.turnedFrom = (face, dx, dy) => {
+    const f = FACING[face] || FACING.s;
+    return f[0] * dx + f[1] * dy <= 0;
+  };
+
   WA.util = U;
 })(window.WA = window.WA || {});

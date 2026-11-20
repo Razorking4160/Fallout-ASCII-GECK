@@ -52,6 +52,7 @@
     const heat = s.notoriety | 0;
     const others = (WA.trade && WA.trade.watchers ? WA.trade.watchers(s, id) : [])
       .filter(w => w.e.id !== id).map(w => w.e.d.name);
+    const wait = WA.trade && WA.trade.cooldownLeft ? WA.trade.cooldownLeft(s, 'pocket:' + id) : 0;
     const rows = Object.keys(p).map(itemId => {
       const it = WA.GAME.items[itemId];
       const n = p[itemId] | 0;
@@ -76,6 +77,7 @@
       `<div class="dim" style="font-size:12px">${others.length
         ? 'Other eyes: ' + U.esc(others.join(', ')) + '.'
         : 'No one else is watching.'}</div>` +
+      (wait ? `<div class="dlgcheck">Steady your hands: ${wait} turn${wait === 1 ? '' : 's'} before another try.</div>` : '') +
       (inWary ? `<div class="dlgcheck">${U.esc(nameOf(id))} is watching you. No pockets until tomorrow.</div>` : '') +
       (MSG ? `<div class="dlgcheck">${U.esc(MSG)}</div>` : '') +
       `<div class="mlegend" style="margin-top:6px">CARRIED</div>` +
@@ -98,6 +100,9 @@
     if (WA.loot && WA.loot.isOpen()) WA.loot.close();
     if (WA.lockpick && WA.lockpick.isOpen()) WA.lockpick.close();
     if (WA.hacking && WA.hacking.isOpen()) WA.hacking.close();
+    // Reaching into someone's pockets turns you toward them.
+    const who = (s.ents || []).find(x => x && x.id === id);
+    if (who) s.face = WA.util.faceTo(who.x - s.px, who.y - s.py) || s.face || 's';
     NPC = id;
     MSG = '';
     pocketsOf(id, s);
@@ -133,8 +138,13 @@
       return false;
     }
     const res = WA.trade.attempt(NPC, itemId, {
-      kind: 'pocket', held: heldOf(NPC).includes(itemId), qty
+      kind: 'pocket', held: heldOf(NPC).includes(itemId), qty, key: 'pocket:' + NPC
     });
+    if (res.blocked) {
+      MSG = `Your hands are still unsteady — spend a turn before reaching for ${nameOf(NPC)} again.`;
+      render();
+      return false;
+    }
     if (!res.result) return false;
     const r = res.result;
     MSG = `${r.name} ${r.difficulty}: ${r.chance}% (rolled ${r.roll}) — ${r.success ? 'success' : 'failure'}.`;
