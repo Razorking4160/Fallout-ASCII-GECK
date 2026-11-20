@@ -19,7 +19,7 @@
   const MAX_TEXT = 16 * 1024 * 1024;
   const MAX_MAPS = 200, MAX_QUESTS = 500, MAX_DEFS = 5000;
 
-  let ACTIVE = null, DBH = null, OPENED = false;
+  let ACTIVE = null, DBH = null, OPENED = false, FP = '';
 
   /* ---------- storage ---------- */
   function openDB() {
@@ -104,11 +104,19 @@
     return JSON.stringify(v);
   }
 
-  function fingerprint(pack) {
-    const s = stable(pack || ACTIVE || null);
+  function digest(pack) {
+    const s = stable(pack || null);
     let h = 5381;
     for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
     return h.toString(16);
+  }
+
+  /* Fingerprinting walks the whole pack, and every autosave asks for the active
+     one, so the applied pack is hashed once instead of on each snapshot. */
+  function fingerprint(pack) {
+    const p = pack || ACTIVE || null;
+    if (p && p === ACTIVE && FP) return FP;
+    return digest(p);
   }
 
   function counts(pack) {
@@ -132,7 +140,25 @@
   /* ---------- validation ---------- */
   function isObj(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
 
-  function checkMap(id, m, errors) {
+  /* Every tile, entity, item and map a pack map may name: the shipped content
+     plus this pack's own definitions. A def set to null removes a shipped one. */
+  function knownNames(pack, mapIds) {
+    const defs = kind => {
+      const out = {};
+      for (const id of Object.keys(WA.GAME[kind] || {})) out[id] = 1;
+      for (const id of Object.keys(pack.defs[kind] || {})) if (pack.defs[kind][id]) out[id] = 1;
+      return out;
+    };
+    const maps = {};
+    for (const id of Object.keys(WA.GAME.maps || {})) maps[id] = 1;
+    for (const id of mapIds) if (ID_RE.test(id)) maps[id] = 1;
+    return { tiles: defs('tiles'), entities: defs('entities'), items: defs('items'), maps };
+  }
+
+  /* world.start() walks things as [id, x, y], resolves every legend symbol to a
+     tile and follows exits by map id, so a map that names anything it does not
+     have throws part-way through loading. Reject it here instead. */
+  function checkMap(id, m, errors, known) {
     const at = `map ${id}`;
     if (!ID_RE.test(id)) { errors.push(`${at}: id must be letters, digits, _ or -`); return; }
     if (!isObj(m)) { errors.push(`${at}: map must be an object`); return; }
@@ -143,11 +169,47 @@
       if (typeof row !== 'string') { errors.push(`${at}: row ${y} is not text`); return; }
       if (row.length > 512) { errors.push(`${at}: row ${y} is too wide`); return; }
     }
-    if (m.legend !== undefined && !isObj(m.legend)) errors.push(`${at}: legend must be an object`);
+    const w = Math.max(1, ...m.rows.map(r => WA.util.split(r).length));
+    const h = m.rows.length;
+    if (m.legend !== undefined) {
+      if (!isObj(m.legend)) errors.push(`${at}: legend must be an object`);
+      else for (const ch of Object.keys(m.legend)) {
+        const tid = m.legend[ch];
+        if (WA.util.split(ch).length !== 1) { errors.push(`${at}: legend key "${ch}" is not one symbol`); continue; }
+        if (typeof tid !== 'string' || !known.tiles[tid]) errors.push(`${at}: legend "${ch}" names unknown tile "${tid}"`);
+      }
+    }
     if (m.start !== undefined && (!Array.isArray(m.start) || m.start.length !== 2 ||
       !isFinite(+m.start[0]) || !isFinite(+m.start[1]))) errors.push(`${at}: start must be [x, y]`);
-    if (m.things !== undefined && !Array.isArray(m.things)) errors.push(`${at}: things must be a list`);
-    if (m.exits !== undefined && !isObj(m.exits)) errors.push(`${at}: exits must be an object`);
+    if (m.things !== undefined) {
+      if (!Array.isArray(m.things)) errors.push(`${at}: things must be a list`);
+      else if (m.things.length > 4000) errors.push(`${at}: too many things`);
+      else for (let i = 0; i < m.things.length; i++) {
+        const t = m.things[i];
+        if (!Array.isArray(t) || t.length !== 3) { errors.push(`${at}: thing ${i} must be [id, x, y]`); continue; }
+        const tid = t[0], x = t[1], y = t[2];
+        if (typeof tid !== 'string' || !(known.entities[tid] || known.items[tid])) {
+          errors.push(`${at}: thing ${i} names unknown entity or item "${tid}"`);
+          continue;
+        }
+        if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= w || y >= h) {
+          errors.push(`${at}: thing ${i} (${tid}) is outside the map`);
+        }
+      }
+    }
+    if (m.exits !== undefined) {
+      if (!isObj(m.exits)) errors.push(`${at}: exits must be an object`);
+      else for (const key of Object.keys(m.exits)) {
+        const pair = String(key).split(',').map(Number);
+        const to = m.exits[key];
+        if (pair.length !== 2 || !Number.isInteger(pair[0]) || !Number.isInteger(pair[1]) ||
+          pair[0] < 0 || pair[1] < 0 || pair[0] >= w || pair[1] >= h) {
+          errors.push(`${at}: exit ${key} is outside the map`);
+          continue;
+        }
+        if (typeof to !== 'string' || !known.maps[to]) errors.push(`${at}: exit ${key} leads to unknown map "${to}"`);
+      }
+    }
   }
 
   function validate(raw) {
@@ -186,7 +248,8 @@
     if (raw.maps !== undefined && !isObj(raw.maps)) errors.push('maps must be an object.');
     const mapIds = isObj(raw.maps) ? Object.keys(raw.maps) : [];
     if (mapIds.length > MAX_MAPS) errors.push('Too many maps in one pack.');
-    for (const id of mapIds.slice(0, MAX_MAPS)) checkMap(id, raw.maps[id], errors);
+    const known = knownNames(pack, mapIds);
+    for (const id of mapIds.slice(0, MAX_MAPS)) checkMap(id, raw.maps[id], errors, known);
     if (!errors.length) for (const id of mapIds) pack.maps[id] = raw.maps[id];
 
     if (raw.quests !== undefined && !isObj(raw.quests)) errors.push('quests must be an object.');
@@ -246,6 +309,7 @@
       }
     }
     ACTIVE = pack;
+    FP = digest(pack);
     if (skipped.length) console.warn('[Wasteland] Content pack skipped: ' + skipped.join(', '));
   }
 
@@ -295,6 +359,7 @@
 
   async function clear() {
     ACTIVE = null;
+    FP = '';
     await eraseStored();
   }
 

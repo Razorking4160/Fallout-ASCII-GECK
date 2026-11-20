@@ -195,6 +195,20 @@
     const st = stateAt(x, y);
     if (st === 'open') { WA.game.say('The terminal is already unlocked.'); WA.view.draw(); return false; }
     if (st === 'fail') { WA.game.say('The terminal is locked out.'); WA.view.draw(); return false; }
+    let laid = false;
+    for (let i = 0; i < 30 && !laid; i++) {
+      pickWords();
+      laid = layout();
+    }
+    /* A screen that never laid out has no password on it, so opening the panel
+       would trap the player in a terminal they cannot beat. Refuse it instead. */
+    if (!laid) {
+      abort();
+      console.warn('[Wasteland] hacking: no usable layout at ' + x + ',' + y);
+      WA.game.say('The screen rolls and will not settle. Try again later.');
+      if (WA.view) WA.view.draw();
+      return false;
+    }
     if (WA.pip) WA.pip.close();
     if (WA.dlg) WA.dlg.close();
     if (WA.loot) WA.loot.abort();
@@ -206,10 +220,6 @@
     FEED = '';
     DUD.clear();
     USED.clear();
-    for (let i = 0; i < 30; i++) {
-      pickWords();
-      if (layout()) break;
-    }
     const el = U.el('hack');
     if (el) el.hidden = false;
     render();
