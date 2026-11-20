@@ -39,5 +39,41 @@
     return Math.max(1, Math.round(amount * (1 - r) - (armorDef || 0)));
   }
 
-  WA.damage = { TYPES, BYPASS_ARMOR, resistance, against, againstAmmo, toPlayer };
+  /* One path for damage dealt to the player. Armour, traits, perks, difficulty,
+     resist chems, limb injury and rads all happen here, so no call site can
+     forget a step; the returned limb is the one that just gave out. */
+  function hurtPlayer(raw, type) {
+    const s = WA.game.S;
+    if (!s || s.dead) return { value: 0, limb: null };
+    let value = toPlayer(raw, type, WA.weapons.armorDef(), WA.weapons.armorRes(type));
+    if (WA.traits) value = Math.round(value * WA.traits.hazardMul(type));
+    // Toughness adds percentage resistance after armour; buffs soak direct hits.
+    if (WA.perks) value = WA.perks.reduce(value, type);
+    if (WA.settings) value = Math.max(1, Math.round(value * WA.settings.incomingMul()));
+    const shield = BYPASS_ARMOR[type] ? 0 : (WA.status ? WA.status.mod('resist') : 0);
+    if (shield) value = Math.max(1, value - shield);
+    s.hp -= value;
+    if (!BYPASS_ARMOR[type] && raw > value) WA.weapons.wearArmor(raw - value);
+    if (WA.rads) WA.rads.expose(type, value);
+    const limb = WA.limbs ? WA.limbs.injure(s, value, type) : null;
+    return { value, limb };
+  }
+
+  /* One path for damage dealt to an enemy: resistance, plus the ammo modifiers
+     when a round is supplied. slay() then does the kill bookkeeping, so a
+     caller that has more to say can finish its line first. */
+  function hurtEnemy(target, amount, type, ammo) {
+    const hit = ammo ? againstAmmo(target, amount, type, ammo) : against(target, amount, type);
+    if (target && target.d) target.hp -= hit.value;
+    return hit;
+  }
+
+  function slay(e, msg) {
+    const s = WA.game.S;
+    if (!e || !e.d || e.hp > 0 || !s || !Array.isArray(s.ents) || !s.ents.includes(e)) return false;
+    if (WA.combat && WA.combat.kill) WA.combat.kill(e, msg);
+    return true;
+  }
+
+  WA.damage = { TYPES, BYPASS_ARMOR, resistance, against, againstAmmo, toPlayer, hurtPlayer, hurtEnemy, slay };
 })(window.WA = window.WA || {});

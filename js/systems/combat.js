@@ -114,21 +114,12 @@
   }
 
   function selfHit(wp, ranged) {
-    const s = S();
     const raw = U.rnd(...(wp && wp.dmg ? wp.dmg : WA.GAME.player.dmg));
     const type = (wp && wp.dt) || (ranged ? 'ballistic' : 'melee');
-    let d = WA.damage.toPlayer(raw, type, WA.weapons.armorDef(), WA.weapons.armorRes(type));
-    if (WA.traits) d = Math.round(d * WA.traits.hazardMul(type));
-    if (WA.perks) d = WA.perks.reduce(d, type);
-    const shield = WA.damage.BYPASS_ARMOR[type] ? 0 : WA.status.mod('resist');
-    if (shield) d = Math.max(1, d - shield);
-    s.hp -= d;
-    if (!WA.damage.BYPASS_ARMOR[type] && raw > d) WA.weapons.wearArmor(raw - d);
-    WA.rads.expose(type, d);
-    const limb = WA.limbs ? WA.limbs.injure(s, d, type) : null;
-    WA.game.say(`Critical failure! You hit yourself for ${d}.`);
-    if (limb && limb.newlyCrippled) WA.game.say(`Your ${limb.def.name} is crippled!`);
-    return d;
+    const res = WA.damage.hurtPlayer(raw, type);
+    WA.game.say(`Critical failure! You hit yourself for ${res.value}.`);
+    if (res.limb && res.limb.newlyCrippled) WA.game.say(`Your ${res.limb.def.name} is crippled!`);
+    return res.value;
   }
 
   /* Three percent chance on an attack. Effects are deliberately non-lethal to
@@ -184,12 +175,11 @@
     if (WA.settings) d = Math.max(1, Math.round(d * WA.settings.outgoingMul()));
 
     const type = wp.dt || (wp.range > 1 ? 'ballistic' : 'melee');
-    const hit = ammo ? WA.damage.againstAmmo(e, d, type, ammo) : WA.damage.against(e, d, type);
     if (o.cripple) e.slow = (e.slow || 0) + o.cripple;
     if (o.weak) e.weak = 1;
-    e.hp -= hit.value;
+    const hit = WA.damage.hurtEnemy(e, d, type, ammo);
 
-    if (e.hp <= 0) { kill(e); return true; }
+    if (WA.damage.slay(e)) return true;
 
     const notes = [];
     if (hit.res >= 0.25) notes.push('resisted');
@@ -306,20 +296,10 @@
       WA.game.say(`${e.d.name} misses you (AC ${roll.ac}).`);
       return;
     }
-    const def = WA.weapons.armorDef();
     const type = e.d.dt || 'melee';
     const raw = U.rnd(...WA.scale.mobDmg(e.d));
-    let d = WA.damage.toPlayer(raw, type, def, WA.weapons.armorRes(type));
-    if (WA.traits) d = Math.round(d * WA.traits.hazardMul(type));
-    // Toughness adds percentage resistance after armour; buffs soak direct hits.
-    if (WA.perks) d = WA.perks.reduce(d, type);
-    if (WA.settings) d = Math.max(1, Math.round(d * WA.settings.incomingMul()));
-    const shield = WA.damage.BYPASS_ARMOR[type] ? 0 : WA.status.mod('resist');
-    if (shield) d = Math.max(1, d - shield);
-    s.hp -= d;
-    if (!WA.damage.BYPASS_ARMOR[type] && raw > d) WA.weapons.wearArmor(raw - d);
-    WA.rads.expose(type, d);
-    const limb = WA.limbs ? WA.limbs.injure(s, d, type) : null;
+    const res = WA.damage.hurtPlayer(raw, type);
+    const d = res.value, limb = res.limb;
 
     let msg = `${e.d.name} ${ranged ? 'shoots' : 'hits'} you for ${d}`;
     if (type !== 'melee') msg += ` (${type})`;
@@ -372,8 +352,7 @@
         (WA.perks ? WA.perks.explosiveMul() : 1) *
         (WA.settings ? WA.settings.outgoingMul() : 1)));
       const dmg = Math.max(1, Math.round(base * (WA.traits ? WA.traits.damageMul(false) : 1)));
-      const hit = WA.damage.against(e, dmg, type);
-      e.hp -= hit.value;
+      const hit = WA.damage.hurtEnemy(e, dmg, type);
       caught.push(e);
       WA.game.say(`The blast hits the ${e.d.name} for ${hit.value}.`);
       if (e.hp > 0) knockEnemy(e, x, y);
@@ -383,25 +362,14 @@
     const pd = U.cheb(s.px, s.py, x, y);
     if (pd <= r) {
       const amount = Math.max(1, Math.round(roll() * fall(pd)));
-      const shield = WA.damage.BYPASS_ARMOR[type] ? 0 : WA.status.mod('resist');
-      let dmg = WA.damage.toPlayer(amount, type, WA.weapons.armorDef(), WA.weapons.armorRes(type));
-      if (WA.traits) dmg = Math.round(dmg * WA.traits.hazardMul(type));
-      if (WA.perks) dmg = WA.perks.reduce(dmg, type);
-      if (WA.settings) dmg = Math.max(1, Math.round(dmg * WA.settings.incomingMul()));
-      if (shield) dmg = Math.max(1, dmg - shield);
-      s.hp -= dmg;
-      if (!WA.damage.BYPASS_ARMOR[type] && amount > dmg) WA.weapons.wearArmor(amount - dmg);
-      WA.rads.expose(type, dmg);
-      const limb = WA.limbs ? WA.limbs.injure(s, dmg, type) : null;
-      WA.game.say(`You are caught in the blast for ${dmg}.`);
-      if (limb && limb.newlyCrippled) WA.game.say(`Your ${limb.def.name} is crippled!`);
+      const res = WA.damage.hurtPlayer(amount, type);
+      WA.game.say(`You are caught in the blast for ${res.value}.`);
+      if (res.limb && res.limb.newlyCrippled) WA.game.say(`Your ${res.limb.def.name} is crippled!`);
       if (s.hp > 0 && pd > 0) knockPlayer(x, y);
       if (d.onHit) WA.status.addPlayer(d.onHit, d.dur || 3, d.mag || 1);
     }
 
-    for (const e of caught) {
-      if (e.hp <= 0 && s.ents.includes(e)) kill(e, `The ${e.d.name} is blown apart.`);
-    }
+    for (const e of caught) WA.damage.slay(e, `The ${e.d.name} is blown apart.`);
   }
 
   function throwItem() {

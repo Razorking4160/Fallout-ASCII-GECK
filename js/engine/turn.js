@@ -113,16 +113,8 @@
         if (here && here.type === 'container' && WA.loot) search = k;
         else if (s.items[k]) WA.inv.pickup(k);
         if (t.hurt) {
-          const type = t.dt || 'melee';
-          let dmg = WA.damage.toPlayer(t.hurt, type, WA.weapons.armorDef(), WA.weapons.armorRes(type));
-          if (WA.traits) dmg = Math.round(dmg * WA.traits.hazardMul(type));
-          dmg = WA.perks.reduce(dmg, type);
-          if (WA.settings) dmg = Math.max(1, Math.round(dmg * WA.settings.incomingMul()));
-          s.hp -= dmg;
-          if (!WA.damage.BYPASS_ARMOR[type] && t.hurt > dmg) WA.weapons.wearArmor(t.hurt - dmg);
-          WA.rads.expose(type, dmg);
-          const limb = WA.limbs ? WA.limbs.injure(s, dmg, type) : null;
-          if (limb && limb.newlyCrippled) WA.game.say(`The ${t.name.toLowerCase()} cripples your ${limb.def.name}!`);
+          const res = WA.damage.hurtPlayer(t.hurt, t.dt || 'melee');
+          if (res.limb && res.limb.newlyCrippled) WA.game.say(`The ${t.name.toLowerCase()} cripples your ${res.limb.def.name}!`);
         }
         // A tile can apply an effect with or without damage: hazards poison,
         // med bays and chem pools hand out buffs.

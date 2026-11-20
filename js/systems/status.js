@@ -100,16 +100,13 @@
       const def = EFX[f.t];
       if (!def) { f.dur = 0; continue; }
       if (def.buff) { f.dur--; continue; }
-      const hit = WA.damage.against(e, f.mag, def.dmg);
-      e.hp -= hit.value;
+      const hit = WA.damage.hurtEnemy(e, f.mag, def.dmg);
       death = def.death;
       WA.game.say(`The ${e.d.name} takes ${hit.value} ${def.dmg} damage (${def.state}).`);
       f.dur--;
     }
     e.fx = e.fx.filter(f => f.dur > 0);
-    if (e.hp <= 0 && WA.game.S.ents.includes(e)) {
-      WA.combat.kill(e, `The ${e.d.name} ${death}.`);
-    }
+    WA.damage.slay(e, `The ${e.d.name} ${death}.`);
   }
 
   function tag(list) {

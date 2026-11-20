@@ -585,13 +585,12 @@
       return false;
     }
     const bonus = Math.floor(WA.scale.dmgBonus(s.lvl) / 2) + fxMod(m, 'strength');
-    const amount = Math.max(1, Math.round(U.rnd(...g.dmg) * g.wf) + bonus);
-    const hit = WA.damage.against(target, amount, g.dt);
-    target.hp -= hit.value;
+    let amount = Math.max(1, Math.round(U.rnd(...g.dmg) * g.wf) + bonus);
+    // A companion swings on the same difficulty dial as the player.
+    if (WA.settings) amount = Math.max(1, Math.round(amount * WA.settings.outgoingMul()));
+    const hit = WA.damage.hurtEnemy(target, amount, g.dt);
     WA.game.say(`${d.name} ${g.ranged ? 'shoots' : 'hits'} the ${target.d.name} for ${hit.value}.`);
-    if (target.hp <= 0 && s.ents.includes(target)) {
-      WA.combat.kill(target, `${d.name} kills the ${target.d.name}.`);
-    }
+    WA.damage.slay(target, `${d.name} kills the ${target.d.name}.`);
     return true;
   }
 

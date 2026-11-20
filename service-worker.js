@@ -99,6 +99,7 @@
 /* 0.64.6: square cells and a forced dark palette synced from the game. */
 /* 0.64.7: closed-stall ammo sales, watchman scaling and copy fixes synced from the game. */
 /* 0.64.8: terminal and content-pack validation fixes synced from the game. */
+/* 0.64.9: shared damage pipelines synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

@@ -274,19 +274,10 @@
   }
 
   function trapHazard(t) {
-    const s = S();
-    const type = t.dt || 'melee';
-    let dmg = WA.damage.toPlayer(t.hurt || 1, type, WA.weapons.armorDef(), WA.weapons.armorRes(type));
-    if (WA.traits) dmg = Math.round(dmg * WA.traits.hazardMul(type));
-    if (WA.perks) dmg = WA.perks.reduce(dmg, type);
-    if (WA.settings) dmg = Math.max(1, Math.round(dmg * WA.settings.incomingMul()));
-    dmg = Math.max(1, dmg);
-    s.hp -= dmg;
-    if (!WA.damage.BYPASS_ARMOR[type] && (t.hurt || 1) > dmg) WA.weapons.wearArmor((t.hurt || 1) - dmg);
-    WA.rads.expose(type, dmg);
+    const res = WA.damage.hurtPlayer(t.hurt || 1, t.dt || 'melee');
     if (t.onHit && WA.status.EFX[t.onHit]) WA.status.addPlayer(t.onHit, t.dur || 2, t.mag || 1);
     if (t.rads) WA.rads.add(t.rads);
-    say(`${t.msg || 'The trap goes off!'} You take ${dmg} damage.`);
+    say(`${t.msg || 'The trap goes off!'} You take ${res.value} damage.`);
   }
 
   function springContainer(cell) {
