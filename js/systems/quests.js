@@ -163,7 +163,9 @@
       return Math.min(g.need, prog(state(id), goalIndex(id, g, i)));
     }
     if (g.kind === 'ammo') return Math.min(g.need, (s.ammo && s.ammo[g.id]) | 0);
-    if (g.kind === 'item') return Math.min(g.need, (s.inv || []).filter(x => x === g.id).length);
+    // Deliveries count the pack and the player counters (stimpaks, RadAway,
+    // repair kits), which is what the Pip-Boy shows as owned.
+    if (g.kind === 'item') return Math.min(g.need, WA.inv ? WA.inv.owned(g.id) : 0);
     return 0;
   }
 
@@ -228,14 +230,7 @@
     // Spend whatever the job asked for.
     for (const g of q.goals) {
       if (g.kind === 'ammo') s.ammo[g.id] = Math.max(0, (s.ammo[g.id] | 0) - g.need);
-      if (g.kind === 'item') {
-        for (let i = 0; i < g.need; i++) {
-          const k = (s.inv || []).indexOf(g.id);
-          if (k >= 0) s.inv.splice(k, 1);
-        }
-        if (s.weapon === g.id && !s.inv.includes(g.id)) s.weapon = null;
-        if (s.armor === g.id && !s.inv.includes(g.id)) s.armor = null;
-      }
+      if (g.kind === 'item' && WA.inv) WA.inv.spend(g.id, g.need);
     }
     const r = altDef ? altDef.reward : (q.reward || {});
     const lvl = s.lvl;

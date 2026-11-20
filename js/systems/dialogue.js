@@ -167,7 +167,9 @@
     const s = S(), m = mem(NPC);
     if (fx.once && m.flags[fx.once]) return;
     if (cost) s.caps -= cost;
-    if (fx.caps) s.caps += fx.caps;
+    // A negative caps effect is a payment: it can empty the purse but never
+    // push the total below zero.
+    if (fx.caps) s.caps = Math.max(0, (s.caps | 0) + (fx.caps | 0));
     if (fx.stims) s.stims = (s.stims | 0) + fx.stims;
     if (fx.kits) s.kits = (s.kits | 0) + fx.kits;
     if (fx.radaways) s.radaways = (s.radaways | 0) + fx.radaways;

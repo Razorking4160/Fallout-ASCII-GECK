@@ -476,15 +476,23 @@
       render();
       return false;
     }
-    const r = WA.skills.checkResult('steal', stealDiff(NPC, id, s));
-    MSG = `${r.name} ${r.difficulty}: ${r.chance}% (rolled ${r.roll}) — ${r.success ? 'success' : 'failure'}.`;
-    say(MSG);
-    if (!r.success) {
-      const caught = caughtBy(NPC, s, 'shelf');
-      MSG = caught.msg;
+    // The same roll, catch handling and unwatched-fumble cooldown as a pocket
+    // or a container; the key names this shelf of this stall.
+    const res = attempt(NPC, id, { kind: 'shelf', key: 'shelf:' + NPC + ':' + id, qty });
+    if (res.blocked) {
+      MSG = `Your hands are still unsteady — spend a turn before reaching for the ${it.name.toLowerCase()} again.`;
       render();
       return false;
     }
+    if (!res.result) return false;
+    const r = res.result;
+    MSG = `${r.name} ${r.difficulty}: ${r.chance}% (rolled ${r.roll}) — ${r.success ? 'success' : 'failure'}.`;
+    if (!res.ok) {
+      MSG += ' ' + (res.caught ? res.caught.msg : 'CAUGHT.');
+      render();
+      return false;
+    }
+    say(MSG);
     const got = takeStock(st, id, qty);
     if (!got) { MSG = `The ${it.name} is sold out.`; render(); return false; }
     give(id, qty);

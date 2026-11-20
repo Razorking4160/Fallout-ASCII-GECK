@@ -61,7 +61,9 @@
       const inHand = held.includes(itemId);
       const chance = WA.trade.stealChance(id, itemId, s, { held: inHand });
       const room = WA.inv.canCarry(WA.inv.itemWeight(itemId) * qty);
-      const can = !inWary && room && !!WA.skills;
+      // An unwatched fumble blocks that pocket until a turn is spent, so the
+      // row is disabled rather than failing after the click.
+      const can = !inWary && !wait && room && !!WA.skills;
       return `<div class="prow"><span>${U.esc(it.name)} ` +
         `<small class="dim">×${n}${it.type === 'ammo' ? ' rounds' : ''}` +
         `${inHand ? ' · in hand' : ''}</small></span>` +

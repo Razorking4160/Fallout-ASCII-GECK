@@ -94,6 +94,9 @@
     for (const k of NUM_FX) {
       if (fx[k] !== undefined && !isFn(fx[k]) && !isFinite(+fx[k])) errors.push(`${where}: ${k} must be a number or function`);
     }
+    if (fx.caps !== undefined && !isFn(fx.caps) && +fx.caps < 0) {
+      warnings.push(`${where}: negative caps effect can only empty the purse; add an "if" so the option is offered only when it is affordable`);
+    }
     if (fx.mark !== undefined && !G().maps[fx.mark]) errors.push(`${where}: mark "${fx.mark}" is not a map`);
     if (fx.quest !== undefined) {
       if (!Array.isArray(fx.quest) || fx.quest.length < 2) errors.push(`${where}: quest effect must be [take|turnin, id, outcome?]`);

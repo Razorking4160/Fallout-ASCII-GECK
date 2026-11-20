@@ -129,6 +129,35 @@
     return n;
   }
 
+  /* Spend owned copies, drawing on the player counters before the pack. The
+     weapon or armour slot is cleared when its last copy goes. Returns how
+     many were actually removed, so a caller can never overdraw. */
+  function spend(id, n) {
+    const s = S();
+    let left = Math.max(0, n | 0);
+    if (!s || !id || !left) return 0;
+    let took = 0;
+    const counter = key => {
+      const k = Math.min(left, s[key] | 0);
+      if (k > 0) { s[key] -= k; left -= k; took += k; }
+    };
+    if (id === 'stimpak') counter('stims');
+    else if (id === 'radaway') counter('radaways');
+    else if (id === 'repair_kit') counter('kits');
+    while (left > 0) {
+      const i = (s.inv || []).indexOf(id);
+      if (i < 0) break;
+      s.inv.splice(i, 1);
+      left--;
+      took++;
+    }
+    if (took && !(s.inv || []).includes(id)) {
+      if (s.weapon === id) s.weapon = null;
+      if (s.armor === id) s.armor = null;
+    }
+    return took;
+  }
+
   /* Keys open locks, and a hacked terminal can release the same locks without
      the key item in hand. */
   function hasKey(id) {
@@ -473,5 +502,5 @@
   }
 
   WA.inv = { html, equip, drop, dropAmmo, pickup, collect, stim, radaway, repair, cureAddiction, use, useItem,
-    owned, hasKey, ammoCount, ammoIdsFor, loadedAmmo, cycleAmmo, spendAmmo, itemWeight, weight, capacity, canCarry };
+    owned, spend, hasKey, ammoCount, ammoIdsFor, loadedAmmo, cycleAmmo, spendAmmo, itemWeight, weight, capacity, canCarry };
 })(window.WA = window.WA || {});
