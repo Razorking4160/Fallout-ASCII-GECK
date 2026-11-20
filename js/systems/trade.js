@@ -359,7 +359,7 @@
       const spot = base && (freeNear(s, witness.x, witness.y, 3) || freeNear(s, s.px, s.py, 5));
       if (!spot) { say(`${nameOf(witness.id)} shouts for the watch.`); return 'alarm'; }
       s.ents.push({
-        x: spot[0], y: spot[1], id: 'bounty_hunter', hp: base.hp,
+        x: spot[0], y: spot[1], id: 'bounty_hunter', hp: WA.scale.mobHp(base),
         d: Object.assign({}, base, { talk: false, c: 'bad', name: 'Watchman' }),
         slow: 0, cd: 0, weak: 0, last: null, fx: []
       });
@@ -688,6 +688,7 @@
     if (!s || !st || !it || s.dead || !canSell(id)) return false;
     const shut = banNotice(NPC, s);
     if (shut) { MSG = shut; render(); return false; }
+    if (WA.sched && !WA.sched.open(NPC)) { say(WA.sched.notice(NPC) || 'The shop is closed.'); render(); return false; }
     const qty = Math.min(Math.max(1, n | 0 || 10), s.ammo[id] | 0);
     if (!isFence(NPC) && hotFrom(id, NPC, s) > 0) {
       MSG = `${nameOf(NPC)} recognizes the ${it.name} as their own stock and will not buy it back.`;

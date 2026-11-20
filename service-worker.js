@@ -97,6 +97,7 @@
 /* 0.64.3: rotation refit, phone columns and bar facings synced from the game. */
 /* 0.64.4: portrait notice and leaning facings synced from the game. */
 /* 0.64.6: square cells and a forced dark palette synced from the game. */
+/* 0.64.7: closed-stall ammo sales, watchman scaling and copy fixes synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

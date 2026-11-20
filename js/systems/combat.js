@@ -131,7 +131,7 @@
     return d;
   }
 
-  /* Four percent chance on an attack. Effects are deliberately non-lethal to
+  /* Three percent chance on an attack. Effects are deliberately non-lethal to
      the attack itself, but the self-hit can still kill a badly wounded player. */
   function criticalFailure(wp, ranged) {
     const s = S();

@@ -260,7 +260,7 @@
         `<button type="button" data-sp="${k}" data-dir="1"${v >= 10 || (s.pts | 0) < 1 ? ' disabled' : ''} aria-label="Raise ${WA.char.SPN[k]}">+</button></div></div>`;
     }).join('');
     return head() +
-      `<div class="cgintro">Distribute all <b>40</b> points. Every attribute starts at 5 and can be adjusted between 1 and 10.</div>` +
+      `<div class="cgintro">Distribute all <b>five</b> SPECIAL points. Every attribute starts at 5 and can be adjusted between 1 and 10.</div>` +
       `<div class="cgpoints"><span>Points left: <b>${s.pts | 0}</b></span><button type="button" data-cg="reset">Reset to 5s</button></div>` +
       `<div class="cgstats">${rows}</div>` +
       `<div class="cgderived">HP ${WA.char.maxHp()} · AP ${WA.char.maxAp()} · Carry ${25 + 25 * (s.sp.S | 0)} lbs</div>` +
