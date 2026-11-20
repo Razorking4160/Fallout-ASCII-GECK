@@ -15,20 +15,34 @@
   }
 
   /* Fewer columns on a narrow screen instead of shrinking every cell: a phone
-     shows a 20-column window of the map at a readable cell size. */
+     shows a 17-column window of the map, which leaves room in each cell for the
+     facing chevron beside the glyph. */
   function viewCols(availW) {
     const book = WA.game.VW || 25;
-    return Math.max(13, Math.min(book, Math.floor(availW / 17)));
+    return Math.max(13, Math.min(book, Math.floor(availW / 20)));
+  }
+
+  /* The height the board can have: the window minus whatever the bar, log and
+     pad actually take. Measured rather than guessed, so a short landscape
+     screen spends its room on the map instead of overflowing the page. */
+  function availHeight() {
+    const vh = window.innerHeight || 640;
+    let chrome = 64; // app padding, flex gaps, the screen's own padding and frame
+    for (const id of ['bar', 'log', 'pad']) {
+      const el = U.el(id);
+      if (el && !el.hidden && el.offsetParent !== null) chrome += el.offsetHeight;
+    }
+    return Math.max(120, vh - chrome);
   }
 
   /* The cell size follows the space the shell actually has. */
   function fitGrid(cols, rows, availW) {
     const sc = U.el('screen');
     if (!sc) return;
-    // Leave room for the log and the pad; a short landscape screen keeps a
-    // floor so the map stays legible rather than collapsing.
-    const availH = Math.max(150, (window.innerHeight || 640) - 320);
-    const size = Math.min(availW / (cols * 0.85), availH / (rows * 0.85), 28);
+    // Cell box ratios come from --cw / --ch in terminal.css: the cell is wider
+    // and taller than the glyph, which leaves the facing chevron its own space.
+    const availH = availHeight();
+    const size = Math.min(availW / (cols * 0.95), availH / (rows * 1.15), 28);
     const px = Math.max(8, Math.round(size * 10) / 10) + 'px';
     if (sc.style.fontSize !== px) sc.style.fontSize = px;
   }

@@ -267,26 +267,14 @@ body.modal-open{overflow:hidden}
 .symgrid{display:flex;flex-wrap:wrap;gap:4px}
 .symbtn{width:32px;height:32px;font-size:17px;padding:0;border-radius:4px}
 
-/* Facing: the glyph itself leans toward the way it is looking, so the cell
-   carries one symbol instead of a symbol plus a marker. The shift is a little
-   over a fifth of a cell: enough to read in a grid of aligned letters without
-   pushing the glyph into its neighbour. */
-#screen i.face{position:relative;z-index:1;box-sizing:border-box}
-#screen i.face-e{padding-left:.44em}
-#screen i.face-w{padding-right:.44em}
-#screen i.face-n{padding-bottom:.44em}
-#screen i.face-s{padding-top:.44em}
-
-/* Portrait only. A phone held sideways gets a rotate notice instead of a
-   squeezed board; the manifest asks installed copies to stay upright. Scoped to
-   the game's body class, because the studio shares this stylesheet and its own
-   layout is fine in landscape. */
-#rotate{display:none}
-@media (orientation:landscape) and (max-height:560px){
-  .portrait-only #app{display:none}
-  .portrait-only #rotate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-    min-height:100vh;min-height:100dvh;padding:24px;text-align:center;color:var(--fg)}
-  .portrait-only #rotate h1{font-size:20px;margin:0;letter-spacing:.04em}
-  .portrait-only #rotate p{font-size:14px;margin:0;color:var(--dim)}
-  .portrait-only #rotate .rotmark{font-size:44px;line-height:1;color:var(--warn);transform:rotate(90deg)}
-}
+/* Facing: one ASCII chevron in the cell, sitting on the side the character is
+   looking at. It is a real character rather than a drawn shape, so it keeps the
+   board's monospace rhythm, and the halo of cell background keeps it from
+   merging into the glyph underneath. */
+#screen i.face{position:relative;z-index:1}
+#screen i.face::after{position:absolute;font-size:.52em;line-height:1;font-weight:700;
+  color:var(--warn);text-shadow:0 0 2px var(--panel),0 0 2px var(--panel),0 0 3px var(--panel)}
+#screen i.face-e::after{content:">";right:-.34em;top:50%;transform:translateY(-50%)}
+#screen i.face-w::after{content:"<";left:-.34em;top:50%;transform:translateY(-50%)}
+#screen i.face-n::after{content:"^";left:50%;top:-.46em;transform:translateX(-50%)}
+#screen i.face-s::after{content:"v";left:50%;bottom:-.46em;transform:translateX(-50%)}
