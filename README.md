@@ -1,6 +1,6 @@
-# Wasteland Studio
+# G.E.C.K.
 
-Authoring app for **Wasteland ASCII**. It runs as its own static site — no build step,
+The Garden of Eden Creation Kit — authoring app for **Fallout ASCII**. It runs as its own static site — no build step,
 no bundler, no dependencies, classic scripts on the shared `WA` namespace — and is
 deployed separately from the game. The Play tab is the embedded preview used by the map
 editor's **Test** button, so the studio carries the full engine as well as the editors.
@@ -130,4 +130,4 @@ Content still travels between the two deployments as a content pack or as genera
 
 The studio registers its own service worker (`service-worker.js`) and caches its files
 for offline authoring. Its cache is independent of the game's, and its manifest installs
-as **Wasteland Studio**.
+as **G.E.C.K.**.

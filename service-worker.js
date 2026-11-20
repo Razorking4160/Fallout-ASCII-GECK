@@ -1,4 +1,4 @@
-/* Offline cache for Wasteland ASCII.
+/* Offline cache for Fallout ASCII.
    WHENEVER THE GAME CHANGES: add or remove entries in APP_FILES and bump the
    version in js/data/version.js, otherwise installed copies keep serving the
    old files. The cache name is built from that file so the Pip-Boy build
@@ -87,6 +87,8 @@
 /* 0.61.3: production deployment; the game link uses the game's canonical URL. */
 /* 0.61.4: Route 9 and pumphouse maps, two repair jobs, studio-only styles, and text maps packed at boot. */
 /* 0.61.5: synced Route 9 and pumphouse encounter and loot balance pass. */
+/* 0.61.6: follows the game's Fallout ASCII rename and icon set. */
+/* 0.61.7: the authoring app is G.E.C.K., with its own G.E.C.K. icon set. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

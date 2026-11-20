@@ -1,7 +1,7 @@
 {
-  "name": "Wasteland Studio",
-  "short_name": "Wasteland Studio",
-  "description": "Authoring tools for Wasteland ASCII: maps, items, enemies and jobs",
+  "name": "G.E.C.K.",
+  "short_name": "G.E.C.K.",
+  "description": "Garden of Eden Creation Kit — authoring tools for Fallout ASCII: maps, items, enemies and jobs",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
