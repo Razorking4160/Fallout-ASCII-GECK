@@ -191,8 +191,9 @@
           }
         }
       } catch (e) {}
-      try { localStorage.setItem(LEGACY_DONE, '1'); } catch (e) {}
     }
+    // Nothing left to move (or the move is done): never scan the legacy key again.
+    try { localStorage.setItem(LEGACY_DONE, '1'); } catch (e) {}
   }
 
   async function refreshMeta() {

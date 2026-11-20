@@ -4,6 +4,8 @@
   'use strict';
   const U = WA.util;
   const $ = U.el;
+  // Rounded, clamped form input. The game's util keeps only U.clamp.
+  const lim = (a, b, v) => Math.min(b, Math.max(a, Math.round(+v) || 0));
 
   const KINDS = ['tiles', 'entities', 'items'];
   const RESERVED = ['pan', 'link', 'erase_item', 'erase_entity', 'start'];
@@ -196,7 +198,7 @@
     for (const [k] of FIELDS[kind]) delete o[k];
     for (const [k, , t] of FIELDS[kind]) {
       if (t === 'rng') {
-        const pair = [fv(k + '0').value, fv(k + '1').value].map(v => U.lim(0, 999, v)).sort((a, b) => a - b);
+        const pair = [fv(k + '0').value, fv(k + '1').value].map(v => lim(0, 999, v)).sort((a, b) => a - b);
         if (pair[0] || pair[1]) o[k] = pair;
       }
       else if (t === 'col') o[k] = fv(k).value === 'custom' ? fv(k + 'x').value : fv(k).value;
@@ -208,7 +210,7 @@
       else if (t === 'keyitem') { if (fv(k).value) o[k] = fv(k).value; }
       else if (t === 'fxsel') { if (fv(k).value) o[k] = fv(k).value; }
       else if (t === 'hands') o[k] = +fv(k).value === 2 ? 2 : 1;
-      else if (k === 'wt') { if (fv(k).value !== '') o[k] = U.lim(0, 999, fv(k).value); }
+      else if (k === 'wt') { if (fv(k).value !== '') o[k] = lim(0, 999, fv(k).value); }
       else if (t === 'res') { const r = parseRes(fv(k).value); if (Object.keys(r).length) o[k] = r; }
       else if (t === 'loot') {
         const ids = [];
@@ -223,7 +225,7 @@
         if (ids.length) o[k] = ids.slice(0, 12);
       }
       else if (t === 'chk') { if (fv(k).checked) o[k] = 1; }
-      else if (t === 'num') { const l = LIM[k] || [0, 9999]; if (+fv(k).value) o[k] = U.lim(l[0], l[1], fv(k).value); }
+      else if (t === 'num') { const l = LIM[k] || [0, 9999]; if (+fv(k).value) o[k] = lim(l[0], l[1], fv(k).value); }
       else if (fv(k).value) o[k] = fv(k).value;
     }
     o.name = String(o.name || 'Thing').slice(0, 40);

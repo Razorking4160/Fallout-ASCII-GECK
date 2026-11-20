@@ -100,11 +100,15 @@
 
   function unlock() {
     const key = KEY, d = defAt(key);
-    const st = WA.loot.ensure(key);
-    if (st) st.open = 1;
     const name = d ? d.name : 'lock';
+    // Locks are only ever authored on containers, so the pick can open the box.
+    const box = !!(d && d.type === 'container' && WA.loot);
+    if (box) {
+      const st = WA.loot.ensure(key);
+      if (st) st.open = 1;
+    }
     close(`The ${name} clicks open.`);
-    WA.loot.open(key);
+    if (box) WA.loot.open(key);
   }
 
   function tryPick() {

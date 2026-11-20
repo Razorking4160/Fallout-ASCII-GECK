@@ -284,5 +284,5 @@
     render();
   }
 
-  WA.hacking = { open, close, abort, guess, pick, useBracket, isOpen, stateAt, attempts };
+  WA.hacking = { open, close, abort, guess, pick, useBracket, isOpen, attempts };
 })(window.WA = window.WA || {});

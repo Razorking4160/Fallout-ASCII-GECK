@@ -273,7 +273,7 @@
     if (!id) return null;
     const s = S(), q = DEFS[id], st = status(id);
     const goals = q.goals || [];
-    const giver = (s.ents || []).find(e => e && e.id === q.giver && !e.dead && (e.hp === undefined || e.hp > 0));
+    const giver = (s.ents || []).find(e => e && e.id === q.giver && (e.hp === undefined || e.hp > 0));
     const deliver = goals.some(g => g.kind === 'ammo' || g.kind === 'item');
     const at = (x, y, text, kind) => {
       // Straight-line grid steps and an 8-way bearing; no path is walked.
@@ -291,7 +291,7 @@
     for (const g of goals) {
       // Kill targets move, so read the live entities on this map.
       if (g.kind === 'kill') {
-        const e = (s.ents || []).find(e => e && e.id === g.id && !e.dead && (e.hp === undefined || e.hp > 0));
+        const e = (s.ents || []).find(e => e && e.id === g.id && (e.hp === undefined || e.hp > 0));
         if (e) return at(e.x, e.y, g.text, 'kill');
       }
       // Repair objectives live on this map's grid, not on its static things list.

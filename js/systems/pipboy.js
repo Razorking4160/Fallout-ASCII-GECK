@@ -29,6 +29,7 @@
     const rads = s.rads | 0;
     const pen = WA.char.baseHp() - WA.char.maxHp();
     const capped = s.lvl >= WA.scale.CAP;
+    const dep = WA.addiction.html();
     return `<div class="prow"><span>${U.esc(s.name || 'Vault Dweller')} <small class="dim">${s.gender || 'male'} · age ${s.age || 25}</small></span></div>` +
       `<div class="prow"><span>Level <b>${s.lvl}</b><small class="dim">/${WA.scale.CAP}</small> · XP ${capped ? 'MAX' : s.xp + '/' + WA.char.need()}</span>` +
         `<span>Points <b>${s.pts}</b></span></div>` +
@@ -42,7 +43,7 @@
       `<div class="prow"><span>TRAITS <small class="dim">${WA.traits.names().length ? U.esc(WA.traits.names().join(' + ')) : 'None'}</small></span></div>` +
       (WA.traits.has('night_person')
         ? `<div class="dim" style="font-size:12px">Night Person: IN/PE ${WA.traits.night() ? '+1 (night)' : '−1 (day)'}</div>` : '') +
-      (WA.addiction.html() ? `<div class="dim" style="font-size:12px;margin-top:4px">DEPENDENCE</div>` + WA.addiction.html() : '') +
+      (dep ? `<div class="dim" style="font-size:12px;margin-top:4px">DEPENDENCE</div>` + dep : '') +
       `<div class="prow" style="gap:12px"><span class="dim">Veteran bonus</span><span>+${WA.scale.dmgBonus(s.lvl)} dmg · +${WA.scale.apBonus(s.lvl)} AP</span></div>` +
       `<div class="prow"><span class="${rads ? 'warn' : 'dim'}">RADS <b>${rads}</b> ` +
         `<small class="dim">${pen ? 'max HP -' + pen : 'clean'}</small></span></div>` +
@@ -133,7 +134,7 @@
       const q = WA.quests.DEFS[id];
       const goals = q.goals || [];
       // The giver is wherever that NPC stands, even when the job points at another map.
-      const giver = (s.ents || []).find(e => e && e.id === q.giver && !e.dead && (e.hp === undefined || e.hp > 0));
+      const giver = (s.ents || []).find(e => e && e.id === q.giver && (e.hp === undefined || e.hp > 0));
       if (giver) {
         const deliver = goals.some(g => g.kind === 'ammo' || g.kind === 'item');
         setMark(giver.x, giver.y,
@@ -145,7 +146,7 @@
         // Kill targets can move, so read the live entities rather than map things.
         if (goal.kind === 'kill') {
           for (const e of s.ents || []) {
-            if (e && e.id === goal.id && !e.dead && (e.hp === undefined || e.hp > 0)) {
+            if (e && e.id === goal.id && (e.hp === undefined || e.hp > 0)) {
               setMark(e.x, e.y, '×', q.name + ' — ' + goal.text, 'kill');
             }
           }

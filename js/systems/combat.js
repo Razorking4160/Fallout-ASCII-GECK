@@ -463,5 +463,5 @@
     WA.turn.end(true);
   }
 
-  WA.combat = { playerAttack, enemyHit, enemyChance, sequence, enemySequence, initiative, fire, throwItem, explosives, throwTarget, blast, kill, knockout: knockEnemy, knockPlayer, criticalFailure };
+  WA.combat = { playerAttack, enemyHit, enemyChance, sequence, enemySequence, initiative, fire, throwItem, explosives, throwTarget, blast, kill, knockPlayer, criticalFailure };
 })(window.WA = window.WA || {});

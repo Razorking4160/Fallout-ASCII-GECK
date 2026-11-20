@@ -289,7 +289,7 @@
     s = s || S();
     const out = [];
     for (const e of (s && s.ents) || []) {
-      if (!e || !e.d || e.dead || e.hp <= 0 || e.d.ally) continue;
+      if (!e || !e.d || e.hp <= 0 || e.d.ally) continue;
       const victim = e.id === id;
       if (!victim && (!e.d.talk || e.d.c === 'bad')) continue;
       const dist = U.cheb(e.x, e.y, s.px, s.py);
@@ -597,9 +597,6 @@
     return changed;
   }
 
-  // Kept as an alias for older saves and callers; it no longer resets a day.
-  const restockIfNewDay = restock;
-
   function give(id, n) {
     const s = S(), d = WA.GAME.items[id];
     if (!d) return;
@@ -847,7 +844,7 @@
   }
 
   WA.trade = { open, close, render, isOpen, buy, sell, sellAmmo, steal, value, factors, buyPrice: unitPrice, sellPrice: salePrice,
-    canSell, state, restock, restockIfNewDay, stockConds, stockCondText, merchant, isFence, stealChance, stealDiff, attempt, caughtBy, watchers, witnesses, cooldownLeft,
+    canSell, state, restock, stockConds, stockCondText, merchant, isFence, stealChance, stealDiff, attempt, caughtBy, watchers, witnesses, cooldownLeft,
     markStolen: markHot, give, watchOf, hot, hotFrom, banNotice,
     get npc() { return NPC; } };
 })(window.WA = window.WA || {});

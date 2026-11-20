@@ -396,7 +396,7 @@
   function spotted(e) {
     const s = S();
     if (!s || !s.sneak || s.sneakSpotted) return;
-    s.sneakSpotted = 1;
+    s.sneakSpotted = true;
     say(`${e && e.d ? e.d.name : 'Something'} spots you!`);
   }
 

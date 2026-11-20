@@ -650,7 +650,7 @@
     get S() { return G.S; },
     get WORLD() { return G.WORLD; },
     set WORLD(v) { G.WORLD = v; },
-    start, newGame, travel, free, entAt, moveEntity, removeEntity, say, updateVis, draw, snapshot, snapshotState, snapshotMap, restore,
+    start, newGame, travel, free, entAt, moveEntity, removeEntity, say, updateVis, snapshot, snapshotState, snapshotMap, restore,
     rebuildOccupancy: () => G.S && rebuild(G.S)
   };
 })(window.WA = window.WA || {});

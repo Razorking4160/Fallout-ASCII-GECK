@@ -5,7 +5,6 @@
 
   U.rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
   U.clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-  U.lim = (a, b, v) => Math.min(b, Math.max(a, Math.round(+v) || 0));
 
   // Escape everything player or forge authored before it reaches innerHTML.
   U.esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
