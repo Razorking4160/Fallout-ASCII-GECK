@@ -138,8 +138,8 @@
         if (x === S.px && y === S.py) { ch = '@'; c = 'hero face face-' + (S.face || 's'); }
         else if (e) {
           d = e.d || {}; ch = d.glyph || '?';
-          // A tracked NPC carries the same caret, dimmer, so you can read who is looking where.
-          c = (d.c || 'bad') + (e.face ? ' face face-' + e.face : '');
+          // Every NPC carries the same caret, dimmer, so you can read who is looking where.
+          c = (d.c || 'bad') + ' face face-' + (e.face || 's');
         }
         else if (it) {
           d = WA.GAME.items[it] || {};

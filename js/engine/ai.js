@@ -11,14 +11,22 @@
     });
     if (path && path.length > 1) {
       const [nx, ny] = path[1];
-      if (WA.game.free(nx, ny)) { WA.game.moveEntity(e, nx, ny); return true; }
+      if (WA.game.free(nx, ny)) {
+        e.face = U.faceTo(nx - e.x, ny - e.y) || e.face;
+        WA.game.moveEntity(e, nx, ny);
+        return true;
+      }
     }
     // No route: fall back to the old greedy step so it never stands still.
     const dx = Math.sign(tx - e.x), dy = Math.sign(ty - e.y);
     const tries = Math.abs(tx - e.x) >= Math.abs(ty - e.y) ? [[dx, 0], [0, dy]] : [[0, dy], [dx, 0]];
     for (const [mx, my] of tries) {
       if (!mx && !my) continue;
-      if (WA.game.free(e.x + mx, e.y + my)) { WA.game.moveEntity(e, e.x + mx, e.y + my); return true; }
+      if (WA.game.free(e.x + mx, e.y + my)) {
+        e.face = U.faceTo(mx, my) || e.face;
+        WA.game.moveEntity(e, e.x + mx, e.y + my);
+        return true;
+      }
     }
     return false;
   }
@@ -30,7 +38,11 @@
       [dirs[i], dirs[j]] = [dirs[j], dirs[i]];
     }
     for (const [dx, dy] of dirs) {
-      if (WA.game.free(e.x + dx, e.y + dy)) { WA.game.moveEntity(e, e.x + dx, e.y + dy); return true; }
+      if (WA.game.free(e.x + dx, e.y + dy)) {
+        e.face = U.faceTo(dx, dy) || e.face;
+        WA.game.moveEntity(e, e.x + dx, e.y + dy);
+        return true;
+      }
     }
     return false;
   }
@@ -64,6 +76,7 @@
     const ai = d.ai || 'pursue';
 
     if (dist === 1) {
+      e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
       WA.combat.enemyHit(e, false, tgt.ally);
       e.cd = Math.max(0, (d.rate || 1) - 1);
       return true;
@@ -81,6 +94,7 @@
 
     if (ai === 'turret') {
       if (sees && dist <= (d.range || 5)) {
+        e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
         WA.combat.enemyHit(e, true, tgt.ally);
         e.cd = Math.max(0, (d.rate || 2) - 1);
         return true;
@@ -89,6 +103,7 @@
     }
 
     if (ai === 'ranged' && sees && dist <= (d.range || 5)) {
+      e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
       WA.combat.enemyHit(e, true, tgt.ally);
       e.cd = Math.max(0, (d.rate || 2) - 1);
       return true;

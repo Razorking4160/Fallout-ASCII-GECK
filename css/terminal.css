@@ -1,7 +1,7 @@
 /* The game display: fixed character grid, per-cell colour, glow and effects. */
 #crt{position:relative;align-self:center;max-width:100%}
 #weather{position:absolute;inset:0;z-index:1;pointer-events:none;width:100%;height:100%;display:block}
-#screen{margin:0;align-self:center;padding:6px;border:1px solid var(--dim);background:var(--panel);display:grid;--cw:.6em;--ch:1.14em;font-family:inherit;font-size:calc(min(100vw - 48px,440px)/15.3);line-height:1.14}
+#screen{margin:0;align-self:center;padding:6px;border:1px solid var(--dim);background:var(--panel);display:grid;--cw:.85em;--ch:.85em;font-family:inherit;font-size:calc(min(100vw - 48px,440px)/15.3);line-height:1.14}
 #screen i{font-style:normal;text-shadow:var(--glow);display:flex;align-items:center;justify-content:center;min-width:0}
 #screen i.wide{font-size:.78em;z-index:1}
 #screen .mem{opacity:.5}
