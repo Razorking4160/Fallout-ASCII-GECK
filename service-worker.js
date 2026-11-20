@@ -95,6 +95,7 @@
 /* 0.64.1: even cell spacing and NPC facings synced from the game. */
 /* 0.64.2: fitted grid and arrow facings synced from the game. */
 /* 0.64.3: rotation refit, phone columns and bar facings synced from the game. */
+/* 0.64.4: portrait notice and leaning facings synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

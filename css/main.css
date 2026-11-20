@@ -267,11 +267,26 @@ body.modal-open{overflow:hidden}
 .symgrid{display:flex;flex-wrap:wrap;gap:4px}
 .symbtn{width:32px;height:32px;font-size:17px;padding:0;border-radius:4px}
 
-/* Facing: a solid bar along the edge the character is aiming at, in that
-   character's own colour. A bar reads at any cell size and on any theme, where
-   a small caret beside the glyph disappeared into it. */
-#screen i.face{position:relative;z-index:1}
-#screen i.face-n{box-shadow:inset 0 .2em 0 var(--warn)}
-#screen i.face-s{box-shadow:inset 0 -.2em 0 var(--warn)}
-#screen i.face-e{box-shadow:inset -.2em 0 0 var(--warn)}
-#screen i.face-w{box-shadow:inset .2em 0 0 var(--warn)}
+/* Facing: the glyph itself leans toward the way it is looking, so the cell
+   carries one symbol instead of a symbol plus a marker. The shift is a little
+   over a fifth of a cell: enough to read in a grid of aligned letters without
+   pushing the glyph into its neighbour. */
+#screen i.face{position:relative;z-index:1;box-sizing:border-box}
+#screen i.face-e{padding-left:.44em}
+#screen i.face-w{padding-right:.44em}
+#screen i.face-n{padding-bottom:.44em}
+#screen i.face-s{padding-top:.44em}
+
+/* Portrait only. A phone held sideways gets a rotate notice instead of a
+   squeezed board; the manifest asks installed copies to stay upright. Scoped to
+   the game's body class, because the studio shares this stylesheet and its own
+   layout is fine in landscape. */
+#rotate{display:none}
+@media (orientation:landscape) and (max-height:560px){
+  .portrait-only #app{display:none}
+  .portrait-only #rotate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    min-height:100vh;min-height:100dvh;padding:24px;text-align:center;color:var(--fg)}
+  .portrait-only #rotate h1{font-size:20px;margin:0;letter-spacing:.04em}
+  .portrait-only #rotate p{font-size:14px;margin:0;color:var(--dim)}
+  .portrait-only #rotate .rotmark{font-size:44px;line-height:1;color:var(--warn);transform:rotate(90deg)}
+}
