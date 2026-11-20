@@ -889,12 +889,22 @@
     // The overworld: places on the road map and the hours each road takes.
     // A node's `road` list is the pool of things that can follow you in there.
     world: {
+      // Terrain decides what trouble a road can throw at you. Each place names
+      // one; its weighted pool mixes with the place's own road list, and
+      // `danger` scales the chance of meeting anything at all.
+      terrains: {
+        vault: { name: 'the vault approach', danger: 0.6, pool: [['radroach', 3]] },
+        open_road: { name: 'the open road', danger: 1, pool: [['feral_dog', 3], ['raider', 2], ['mole_rat', 1]] },
+        bypass: { name: 'the bypass', danger: 1.1, pool: [['feral_dog', 4], ['raider_gunner', 2], ['giant_ant', 1]] },
+        ruins: { name: 'the ruins', danger: 1.3, pool: [['feral_ghoul', 4], ['raider_gunner', 2], ['radroach', 2]] },
+        wetland: { name: 'the flooded ground', danger: 1.4, pool: [['mirelurk', 3], ['feral_ghoul', 2], ['bloatfly', 1]] }
+      },
       nodes: {
-        vault: { x: 2, y: 2, glyph: 'V', label: 'VAULT 42', road: [] },
-        outskirts: { x: 9, y: 4, glyph: 'O', label: 'OUTSKIRTS', road: ['raider', 'feral_dog'] },
-        ruins: { x: 16, y: 2, glyph: 'R', label: 'RUINS', road: ['raider', 'feral_ghoul'] },
-        bypass: { x: 12, y: 7, glyph: 'B', label: 'ROUTE 9', road: ['feral_dog', 'raider'] },
-        pumphouse: { x: 18, y: 6, glyph: 'P', label: 'PUMPHOUSE', road: ['feral_ghoul'] }
+        vault: { x: 2, y: 2, glyph: 'V', label: 'VAULT 42', terrain: 'vault', road: [] },
+        outskirts: { x: 9, y: 4, glyph: 'O', label: 'OUTSKIRTS', terrain: 'open_road', road: ['raider', 'feral_dog'] },
+        ruins: { x: 16, y: 2, glyph: 'R', label: 'RUINS', terrain: 'ruins', road: ['raider', 'feral_ghoul'] },
+        bypass: { x: 12, y: 7, glyph: 'B', label: 'ROUTE 9', terrain: 'bypass', road: ['feral_dog', 'raider'] },
+        pumphouse: { x: 18, y: 6, glyph: 'P', label: 'PUMPHOUSE', terrain: 'wetland', road: ['feral_ghoul'] }
       },
       routes: [['vault', 'outskirts', 2], ['outskirts', 'ruins', 3],
         ['ruins', 'bypass', 2], ['bypass', 'pumphouse', 1]]

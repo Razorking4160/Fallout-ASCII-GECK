@@ -1,8 +1,10 @@
 /* The overworld: discovered places joined by roads. A trip costs hours on the
    game clock (two minutes a turn), and the road can produce an encounter.
-   Outdoorsman shortens a trip, lowers the chance of trouble and can slip you
-   past an ambush. Routes only run through places you have already visited, so
-   travel never skips unexplored ground. */
+   Every place sits in a terrain, and the terrain's weighted table decides what
+   trouble a road can throw at you; the place's own road list stays as the local
+   regulars. Outdoorsman shortens a trip, lowers the chance of trouble and can
+   slip you past an ambush. Routes only run through places you have already
+   visited, so travel never skips unexplored ground. */
 (function (WA) {
   'use strict';
   const U = WA.util;
@@ -11,11 +13,53 @@
   const DATA = () => (WA.GAME && WA.GAME.world) || { nodes: {}, routes: [] };
   const nodes = () => DATA().nodes || {};
   const routes = () => (Array.isArray(DATA().routes) ? DATA().routes : []);
+  const terrains = () => DATA().terrains || {};
   const known = (s, id) => !!(s && s.seenMaps && s.seenMaps[id] && WA.GAME.maps[id]);
   const label = id => {
     const n = nodes()[id] || {};
     return n.label || (WA.GAME.maps[id] && WA.GAME.maps[id].name) || id;
   };
+
+  /* The ground a destination sits in, or null when the world data names none. */
+  function terrain(id) {
+    const n = nodes()[id] || {};
+    return (n.terrain && terrains()[n.terrain]) || null;
+  }
+
+  /* Weighted trouble for a destination: the place's own regulars carry weight 2
+     each and its terrain adds the rest, so a route keeps the character of both.
+     Older world data with no terrains falls back to the plain road list. */
+  function weights(id) {
+    const n = nodes()[id] || {};
+    const out = {};
+    const add = (e, w) => { if (e && WA.GAME.entities[e]) out[e] = (out[e] || 0) + w; };
+    for (const e of (Array.isArray(n.road) ? n.road : [])) add(e, 2);
+    const t = terrain(id);
+    for (const row of (t && Array.isArray(t.pool) ? t.pool : [])) {
+      if (Array.isArray(row)) add(row[0], Math.max(1, Math.round(+row[1]) || 1));
+      else add(row, 1);
+    }
+    return out;
+  }
+
+  /* A destination's whole table, ready to draw from. */
+  function table(id) {
+    const w = weights(id);
+    const ids = Object.keys(w);
+    return { w, ids, total: ids.reduce((n, e) => n + w[e], 0) };
+  }
+
+  /* One weighted draw from a destination's table, or null when it is empty. */
+  function pick(id) {
+    const t = table(id);
+    if (!t.total) return null;
+    let roll = Math.random() * t.total;
+    for (const e of t.ids) {
+      roll -= t.w[e];
+      if (roll < 0) return e;
+    }
+    return t.ids[t.ids.length - 1];
+  }
 
   /* Roads in both directions, with their travel time in hours. */
   function roads() {
@@ -56,10 +100,27 @@
     return { ids, hours: dist[to] };
   }
 
-  /* Trouble on a leg, in percent, before Outdoorsman's help. */
-  function encounterChance(hours, outdoors) {
-    const base = 6 * hours + 8 - Math.max(0, outdoors - 20) * 0.5;
+  /* Trouble on a leg, in percent, before Outdoorsman's help. The destination's
+     terrain scales it: the ruins and the flooded ground are worse than road. */
+  function encounterChance(hours, outdoors, id) {
+    const t = terrain(id);
+    const danger = t && +t.danger > 0 ? +t.danger : 1;
+    const base = (6 * hours + 8 - Math.max(0, outdoors - 20) * 0.5) * danger;
     return Math.max(3, Math.min(70, Math.round(base)));
+  }
+
+  /* A short read, straight from the data, on which ground is the worst. */
+  function dangerLine() {
+    const list = Object.keys(terrains())
+      .map(id => terrains()[id])
+      .filter(t => t && +t.danger > 1)
+      .sort((a, b) => (+b.danger) - (+a.danger))
+      .slice(0, 2)
+      .map(t => t.name);
+    if (!list.length) return '';
+    return list.length === 2
+      ? `Trouble weighs heavier in ${list[0]} and ${list[1]}.`
+      : `Trouble weighs heavier in ${list[0]}.`;
   }
 
   function danger(s) {
@@ -131,15 +192,17 @@
         const p = plan(s, id);
         if (!p) return `<div class="prow"><span class="dim">${U.esc(label(id))} <small>no known road</small></span></div>`;
         const legs = p.ids.length - 1;
+        const t = terrain(id);
+        const ground = t ? ` · ${U.esc(t.name)}` : '';
         return `<div class="prow"><span>${U.esc(label(id))} ` +
-          `<small class="dim">${p.hours}h · ${legs} leg${legs === 1 ? '' : 's'}</small></span>` +
+          `<small class="dim">${p.hours}h · ${legs} leg${legs === 1 ? '' : 's'}${ground}</small></span>` +
           `<button data-travel="${U.esc(id)}" style="width:84px">Travel</button></div>`;
       }).join('');
     return `<div class="mlegend" style="margin-top:6px">OVERWORLD</div>` +
       `<div class="pmap">${chart(s)}</div>` +
       `<div class="mlegend">@ you · letter visited · ? rumour · · road</div>` +
       `<div class="mlist" style="margin-top:3px">Outdoorsman ${WA.skills.value('outdoorsman')}%: ` +
-        `shorter trips, fewer road encounters, and a chance to slip past one.</div>` +
+        `shorter trips, fewer road encounters, and a chance to slip past one. ${dangerLine()}</div>` +
       (rows || '<div class="mlist">No other known places yet. Walk the exits to find them.</div>');
   }
 
@@ -164,16 +227,16 @@
       WA.game.say(`Outdoorsman ${short.skill}% (rolled ${short.roll}): a shorter road — ${hours}h instead of ${p.hours}h.`);
     }
 
-    // Trouble is rolled once for the whole trip and arrives with you. An
-    // indoor destination has no road pool, so nothing follows you inside.
-    const dest = nodes()[to] || {};
-    const pool = (dest.road || []).filter(id => WA.GAME.entities[id]);
-    let ambush = false;
-    if (pool.length && Math.random() * 100 < encounterChance(hours, out)) {
+    // Trouble is rolled once for the whole trip and arrives with you, drawn from
+    // the destination's terrain table mixed with that place's own regulars.
+    const t = terrain(to);
+    const ground = t ? t.name : 'the road';
+    let ambush = null;
+    if (table(to).total && Math.random() * 100 < encounterChance(hours, out, to)) {
       const dodge = WA.skills.checkResult('outdoorsman', 35);
       if (dodge.success) {
-        WA.game.say(`Outdoorsman ${dodge.skill}% (rolled ${dodge.roll}): you spot trouble on the road and slip past it.`);
-      } else ambush = true;
+        WA.game.say(`Outdoorsman ${dodge.skill}% (rolled ${dodge.roll}): you spot trouble on ${ground} and slip past it.`);
+      } else ambush = pick(to);
     }
 
     WA.time.advance(s, hours * 60);
@@ -183,8 +246,8 @@
     const ns = S();
     if (WA.sched) WA.sched.sync(ns);
     if (ambush) {
-      const e = spawnNear(ns, pool[U.rnd(0, pool.length - 1)]);
-      if (e) WA.game.say(`On the road: a ${e.d.name.toLowerCase()} followed you in.`);
+      const e = spawnNear(ns, ambush);
+      if (e) WA.game.say(`A ${e.d.name.toLowerCase()} followed you in from ${ground}.`);
     }
     WA.game.say(`It is ${WA.time.label(ns)}.`);
     if (WA.game.updateVis) WA.game.updateVis();
@@ -194,5 +257,8 @@
     return true;
   }
 
-  WA.overworld = { nodes, roads, plan, chart, html, travelTo, encounterChance };
+  WA.overworld = {
+    nodes, terrains, terrain, weights, table, pick, roads, plan, chart, html,
+    travelTo, encounterChance
+  };
 })(window.WA = window.WA || {});
