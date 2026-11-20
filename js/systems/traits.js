@@ -349,8 +349,7 @@
     const s = S();
     if (!s || s.test || s.traitsDone) return false;
     if (OPEN) return true;
-    if (WA.pip && WA.pip.isOpen()) WA.pip.close();
-    if (WA.dlg && WA.dlg.isOpen()) WA.dlg.close();
+    WA.ui.closeAll('chargen');
     PICK = Array.isArray(s.traits) ? s.traits.slice(0, 2) : [];
     TAGS = Array.isArray(s.tags) ? s.tags.filter(id => WA.skills && WA.skills.BY[id]).slice(0, TAG_TARGET) : [];
     NAME = String(s.name || 'Vault Dweller').slice(0, 20);

@@ -374,10 +374,7 @@
 
   function throwItem() {
     const s = S();
-    if (!s || s.dead || (WA.pip && WA.pip.isOpen()) || (WA.dlg && WA.dlg.isOpen()) ||
-      (WA.loot && WA.loot.isOpen()) || (WA.lockpick && WA.lockpick.isOpen()) ||
-      (WA.hacking && WA.hacking.isOpen()) || (WA.ending && WA.ending.isOpen()) ||
-      (WA.traits && WA.traits.isOpen())) return;
+    if (!s || s.dead || WA.ui.anyOpen()) return;
     const list = explosives();
     if (!list.length) { WA.game.say('You have nothing to throw.'); return WA.view.draw(); }
     const id = list[0], d = WA.GAME.items[id];
@@ -411,10 +408,7 @@
 
   function fire() {
     const s = S();
-    if (!s || s.dead || (WA.pip && WA.pip.isOpen()) || (WA.dlg && WA.dlg.isOpen()) ||
-      (WA.loot && WA.loot.isOpen()) || (WA.lockpick && WA.lockpick.isOpen()) ||
-      (WA.hacking && WA.hacking.isOpen()) || (WA.ending && WA.ending.isOpen()) ||
-      (WA.traits && WA.traits.isOpen())) return;
+    if (!s || s.dead || WA.ui.anyOpen()) return;
     const wp = WA.GAME.items[s.weapon] || {};
     const rng = wp.range || 1;
     if (rng < 2) { WA.game.say('Equip a ranged weapon first. For melee, walk into enemies.'); return WA.view.draw(); }

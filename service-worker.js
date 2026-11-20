@@ -102,6 +102,7 @@
 /* 0.64.9: shared damage pipelines synced from the game. */
 /* 0.64.10: delivery, pickpocket, shelf-theft and dialogue-cap fixes synced from the game. */
 /* 0.64.11: entity, export, sneak-flag, lockpick and legacy-save cleanup synced from the game. */
+/* 0.64.12: the shared modal registry synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
@@ -139,6 +140,7 @@ const APP_FILES = [
   "./js/engine/pathfinding.js",
   "./js/engine/renderer.js",
   "./js/engine/turn.js",
+  "./js/engine/ui.js",
   "./js/engine/util.js",
   "./js/engine/visibility.js",
   "./js/engine/weather.js",

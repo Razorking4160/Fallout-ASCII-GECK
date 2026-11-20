@@ -114,8 +114,7 @@
     const s = S(), st = ensure(k);
     if (!s || !st) return false;
     if (!st.it.length) { cleanup(k); return false; }
-    if (WA.pip) WA.pip.close();
-    if (WA.dlg) WA.dlg.close();
+    WA.ui.closeAll('loot');
     KEY = k;
     PENDING = false;
     const el = U.el('loot');
@@ -163,8 +162,7 @@
     // Show the trap state before revealing the contents. The player must press
     // Open before the trap can fire, so scanning and disarming first matters.
     if (trapStatus(k) === 'armed') {
-      if (WA.pip) WA.pip.close();
-      if (WA.dlg) WA.dlg.close();
+      WA.ui.closeAll('loot');
       KEY = k;
       PENDING = true;
       const el = U.el('loot');

@@ -96,12 +96,7 @@
   function open(id) {
     const s = S();
     if (!s || s.dead || !Array.isArray(defOf(id).carry)) return false;
-    if (WA.pip) WA.pip.close();
-    if (WA.dlg && WA.dlg.isOpen()) WA.dlg.close();
-    if (WA.trade && WA.trade.isOpen()) WA.trade.close();
-    if (WA.loot && WA.loot.isOpen()) WA.loot.close();
-    if (WA.lockpick && WA.lockpick.isOpen()) WA.lockpick.close();
-    if (WA.hacking && WA.hacking.isOpen()) WA.hacking.close();
+    WA.ui.closeAll('pick');
     // Reaching into someone's pockets turns you toward them.
     const who = (s.ents || []).find(x => x && x.id === id);
     if (who) s.face = WA.util.faceTo(who.x - s.px, who.y - s.py) || s.face || 's';

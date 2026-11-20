@@ -87,10 +87,8 @@
 
   function toggle() {
     const s = S();
-    if (!s || s.dead || (WA.pip && WA.pip.isOpen()) || (WA.dlg && WA.dlg.isOpen()) ||
-      (WA.loot && WA.loot.isOpen()) || (WA.lockpick && WA.lockpick.isOpen()) ||
-      (WA.hacking && WA.hacking.isOpen()) || (WA.ending && WA.ending.isOpen()) ||
-      (WA.traits && WA.traits.isOpen()) || (WA.death && WA.death.isOpen())) return;
+    // VATS itself may be open (v closes it), but no other panel may be.
+    if (!s || s.dead || (WA.ui.anyOpen() && !WA.ui.isOpen('vats'))) return;
     VS = VS ? 0 : 1;
     VT = null;
     ui();

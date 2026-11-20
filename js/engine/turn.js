@@ -3,13 +3,8 @@
   'use strict';
   const U = WA.util;
   const S = () => WA.game.S;
-  // Browsing the Pip-Boy pauses the world: no world turn, no enemy actions.
-  const paused = () => !!((WA.pip && WA.pip.isOpen()) || (WA.dlg && WA.dlg.isOpen()) ||
-    (WA.trade && WA.trade.isOpen()) || (WA.pick && WA.pick.isOpen()) ||
-    (WA.loot && WA.loot.isOpen()) || (WA.lockpick && WA.lockpick.isOpen()) ||
-    (WA.hacking && WA.hacking.isOpen()) || (WA.gambling && WA.gambling.isOpen()) ||
-    (WA.traits && WA.traits.isOpen()) ||
-    (WA.ending && WA.ending.isOpen()));
+  // An open panel pauses the world: no world turn, no enemy actions.
+  const paused = () => WA.ui.paused();
 
   function end(used) {
     const s = S();

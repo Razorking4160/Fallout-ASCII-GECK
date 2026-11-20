@@ -209,10 +209,7 @@
       if (WA.view) WA.view.draw();
       return false;
     }
-    if (WA.pip) WA.pip.close();
-    if (WA.dlg) WA.dlg.close();
-    if (WA.loot) WA.loot.abort();
-    if (WA.lockpick) WA.lockpick.abort();
+    WA.ui.closeAll('hack');
     AT = [x, y];
     MAX = attempts(t.hack);
     TRIES = 0;

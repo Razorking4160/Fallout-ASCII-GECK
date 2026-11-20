@@ -100,11 +100,7 @@
   function open() {
     const s = S(), el = U.el('ending');
     if (!s || !s.ending || !el) return false;
-    if (WA.pip) WA.pip.close();
-    if (WA.dlg) WA.dlg.close();
-    if (WA.loot) WA.loot.close();
-    if (WA.lockpick) WA.lockpick.close();
-    if (WA.hacking) WA.hacking.close();
+    WA.ui.closeAll('ending');
     el.hidden = false;
     document.body.classList.add('ending-open');
     bind();

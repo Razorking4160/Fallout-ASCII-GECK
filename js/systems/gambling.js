@@ -191,13 +191,7 @@
       GAME = 'seven';
       BETSEL = { seven: WAGERS.seven.min, boxcars: WAGERS.boxcars.min };
     }
-    if (WA.pip) WA.pip.close();
-    if (WA.dlg) WA.dlg.close();
-    if (WA.trade) WA.trade.close();
-    if (WA.pick) WA.pick.close();
-    if (WA.loot) WA.loot.close();
-    if (WA.lockpick) WA.lockpick.close();
-    if (WA.hacking) WA.hacking.close();
+    WA.ui.closeAll('gamble');
     NPC = id || 'dealer';
     MSG = '';
     MSG_GOOD = false;

@@ -325,14 +325,8 @@
 
   function open(id) {
     const p = U.el('pip');
-    if (!p || (WA.traits && WA.traits.isOpen()) || (WA.ending && WA.ending.isOpen()) ||
-      (WA.death && WA.death.isOpen())) return;
-    if (WA.dlg) WA.dlg.close();
-    if (WA.trade && WA.trade.isOpen()) WA.trade.close();
-    if (WA.pick) WA.pick.close();
-    if (WA.loot) WA.loot.close();
-    if (WA.lockpick) WA.lockpick.close();
-    if (WA.hacking) WA.hacking.close();
+    if (!p || WA.ui.isOpen('chargen') || WA.ui.isOpen('ending') || WA.ui.isOpen('death')) return;
+    WA.ui.closeAll('pip');
     p.hidden = false;
     if (id) TAB = id;
     render();

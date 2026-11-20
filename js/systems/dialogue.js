@@ -243,7 +243,7 @@
   function open(id) {
     const d = WA.GAME.entities[id];
     if (!d || !d.talk) return false;
-    if (WA.pip) WA.pip.close();
+    WA.ui.closeAll('dlg');
     NPC = id;
     NODE = '';
     CHECK_MSG = '';

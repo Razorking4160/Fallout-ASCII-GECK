@@ -819,12 +819,7 @@
     }
     const shut = banNotice(id, s);
     if (shut) { say(shut); return false; }
-    if (WA.pip && WA.pip.isOpen()) WA.pip.close();
-    if (WA.dlg && WA.dlg.isOpen()) WA.dlg.close();
-    if (WA.pick && WA.pick.isOpen()) WA.pick.close();
-    if (WA.loot && WA.loot.isOpen()) WA.loot.close();
-    if (WA.lockpick && WA.lockpick.isOpen()) WA.lockpick.close();
-    if (WA.hacking && WA.hacking.isOpen()) WA.hacking.close();
+    WA.ui.closeAll('trade');
     restock(id, s);
     MSG = '';
     NPC = id;

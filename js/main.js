@@ -13,7 +13,8 @@
     if (t === 'forge') { WA.forge.fillForge(); if (WA.authoring && WA.authoring.browse) WA.authoring.browse(); }
     if (t === 'bench' && WA.bench) WA.bench.show();
   }
-  WA.ui = { show };
+  // The registry lives in js/engine/ui.js; the studio adds its tab switch.
+  WA.ui.show = show;
 
   function bindPlay() {
     // D-pad: one step on touch, repeat while held.
@@ -44,37 +45,10 @@
     document.querySelector('[data-k="vats"]').addEventListener('click', () => WA.vats.toggle());
     document.querySelector('[data-k="wait"]').addEventListener('click', () => WA.turn.wait());
 
-    // Every panel is a fixed modal over the map on small screens. The backdrop
-    // blocks stray movement taps and gives touch users a way to dismiss one.
-    const MODALS = ['pip', 'chargen', 'vats', 'dlg', 'trade', 'pick', 'loot', 'lock', 'hack', 'gamble', 'ending', 'death'];
+    // Every panel is a fixed modal over the map on small screens. WA.ui owns the
+    // panel list, the backdrop and the dismissal order, so nothing is copied here.
     const back = $('modalback');
-    const modalOpen = () => MODALS.some(id => { const el = $(id); return !!el && !el.hidden; });
-    const syncModal = () => {
-      const open = modalOpen();
-      if (back) back.hidden = !open;
-      document.body.classList.toggle('modal-open', open);
-    };
-    if (typeof MutationObserver !== 'undefined') {
-      const obs = new MutationObserver(syncModal);
-      MODALS.forEach(id => { const el = $(id); if (el) obs.observe(el, { attributes: true, attributeFilter: ['hidden'] }); });
-    }
-    syncModal();
-
-    const dismissModal = () => {
-      // Character creation and death require an explicit choice.
-      if (WA.traits && WA.traits.isOpen()) return;
-      if (WA.death && WA.death.isOpen()) return;
-      if (WA.ending && WA.ending.isOpen()) return WA.ending.close();
-      if (WA.trade && WA.trade.isOpen()) return WA.trade.close();
-      if (WA.pick && WA.pick.isOpen()) return WA.pick.close();
-      if (WA.loot && WA.loot.isOpen()) return WA.loot.close();
-      if (WA.lockpick && WA.lockpick.isOpen()) return WA.lockpick.close();
-      if (WA.hacking && WA.hacking.isOpen()) return WA.hacking.close();
-      if (WA.gambling && WA.gambling.isOpen()) return WA.gambling.close();
-      if (WA.dlg && WA.dlg.isOpen()) return WA.dlg.close();
-      if (WA.pip && WA.pip.isOpen()) return WA.pip.close();
-      if (!$('vats').hidden) return WA.vats.toggle();
-    };
+    WA.ui.watch();
     // A panel can open during the D-pad's pointerdown. The click that follows
     // is then retargeted to the new backdrop, which would dismiss the panel
     // instantly. Only dismiss a click that actually began on the backdrop.
@@ -87,7 +61,7 @@
         backHit = false;
         ev.preventDefault();
         ev.stopPropagation();
-        dismissModal();
+        WA.ui.escape();
       });
     }
 
@@ -182,18 +156,7 @@
     document.addEventListener('click', e => {
       const b = e.target.closest('[data-close]');
       if (!b) return;
-      const name = b.dataset.close;
-      if (name === 'pip') WA.pip.close();
-      else if (name === 'dlg') { WA.dlg.close(); WA.view.draw(); }
-      else if (name === 'trade') WA.trade.close();
-      else if (name === 'pick') WA.pick.close();
-      else if (name === 'loot') WA.loot.close();
-      else if (name === 'lock') WA.lockpick.close();
-      else if (name === 'hack') WA.hacking.close();
-      else if (name === 'gamble') WA.gambling.close();
-      else if (name === 'vats') WA.vats.close();
-      else if (name === 'ending') WA.ending.close();
-      else return;
+      if (!WA.ui.close(b.dataset.close)) return;
       e.preventDefault();
       e.stopPropagation();
     });
@@ -205,25 +168,25 @@
       if (/editing|forging|benching/.test(document.body.className)) return;
       if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
       if (!WA.game.S) return;
-      if (WA.traits && WA.traits.isOpen()) return;
-      if (WA.ending && WA.ending.isOpen()) {
-        if (ev.key === 'Escape') { ev.preventDefault(); WA.ending.close(); }
+      if (WA.ui.isOpen('chargen')) return;
+      if (WA.ui.isOpen('ending')) {
+        if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('ending'); }
         return;
       }
       // While a lock is open the arrows work the pin, not the player.
-      if (WA.lockpick && WA.lockpick.isOpen()) {
+      if (WA.ui.isOpen('lock')) {
         if (ev.key === 'ArrowLeft' || ev.key === 'a') { ev.preventDefault(); WA.lockpick.move(-1); }
         else if (ev.key === 'ArrowRight' || ev.key === 'd') { ev.preventDefault(); WA.lockpick.move(1); }
         else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); WA.lockpick.tryPick(); }
-        else if (ev.key === 'Escape') { ev.preventDefault(); WA.lockpick.close(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('lock'); }
         return;
       }
-      if (WA.hacking && WA.hacking.isOpen()) {
+      if (WA.ui.isOpen('hack')) {
         if (/^[1-9]$/.test(ev.key)) { ev.preventDefault(); WA.hacking.pick(+ev.key - 1); }
-        else if (ev.key === 'Escape') { ev.preventDefault(); WA.hacking.close(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('hack'); }
         return;
       }
-      if (WA.gambling && WA.gambling.isOpen()) {
+      if (WA.ui.isOpen('gamble')) {
         if (/^[1-4]$/.test(ev.key)) {
           ev.preventDefault();
           const bet = WA.gambling.BETS[+ev.key - 1];
@@ -239,16 +202,16 @@
           WA.gambling.play();
         } else if (ev.key === 'Escape') {
           ev.preventDefault();
-          WA.gambling.close();
+          WA.ui.close('gamble');
         }
         return;
       }
-      if (WA.pick && WA.pick.isOpen()) {
-        if (ev.key === 'Escape') { ev.preventDefault(); WA.pick.close(); }
+      if (WA.ui.isOpen('pick')) {
+        if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('pick'); }
         return;
       }
-      if (WA.trade && WA.trade.isOpen()) {
-        if (ev.key === 'Escape') { ev.preventDefault(); WA.trade.close(); }
+      if (WA.ui.isOpen('trade')) {
+        if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('trade'); }
         return;
       }
       if (KEYS[ev.key]) { ev.preventDefault(); WA.turn.playerMove(KEYS[ev.key][0], KEYS[ev.key][1]); }
@@ -260,12 +223,7 @@
       else if (ev.key === 'v') WA.vats.toggle();
       else if (ev.key === 'p') { ev.preventDefault(); WA.pip.toggle(); }
       else if (ev.key === 'Escape') {
-        if (WA.hacking && WA.hacking.isOpen()) WA.hacking.close();
-        else if (WA.pick && WA.pick.isOpen()) WA.pick.close();
-        else if (WA.loot && WA.loot.isOpen()) WA.loot.close();
-        else if (WA.dlg && WA.dlg.isOpen()) WA.dlg.close();
-        else if (!$('vats').hidden) WA.vats.toggle();
-        else WA.pip.close();
+        WA.ui.escape();
         WA.view.draw();
       }
     });

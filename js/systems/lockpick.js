@@ -58,9 +58,7 @@
     const s = S(), d = defAt(k);
     if (!s || s.dead || !d || !d.lock) return false;
     if (pins() < 1) { WA.game.say(`The ${d.name} is locked. You have no bobby pins.`); WA.view.draw(); return false; }
-    if (WA.pip) WA.pip.close();
-    if (WA.dlg) WA.dlg.close();
-    if (WA.loot) WA.loot.abort();
+    WA.ui.closeAll('lock');
     KEY = k;
     // You turn to the lock you are working on.
     const [kx, ky] = String(k).split(',').map(Number);
