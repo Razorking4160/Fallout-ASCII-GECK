@@ -272,9 +272,9 @@ body.modal-open{overflow:hidden}
    The caret sits inside the cell and the cell is lifted above its neighbours,
    so a left or right caret cannot be painted over by the next cell's glyph. */
 #screen i.face{position:relative;z-index:1}
-#screen i.face::after{content:"";position:absolute;width:0;height:0;border:.13em solid transparent;opacity:.55;pointer-events:none}
-#screen i.face-n::after{top:0;left:50%;margin-left:-.13em;border-bottom-color:currentColor;border-top-width:0}
-#screen i.face-e::after{right:0;top:50%;margin-top:-.13em;border-left-color:currentColor;border-right-width:0}
-#screen i.face-s::after{bottom:0;left:50%;margin-left:-.13em;border-top-color:currentColor;border-bottom-width:0}
-#screen i.face-w::after{left:0;top:50%;margin-top:-.13em;border-right-color:currentColor;border-left-width:0}
+#screen i.face::after{content:"";position:absolute;width:0;height:0;border:.22em solid transparent;opacity:.9;pointer-events:none}
+#screen i.face-n::after{top:0;left:50%;margin-left:-.22em;border-bottom-color:currentColor;border-top-width:0}
+#screen i.face-e::after{right:0;top:50%;margin-top:-.22em;border-left-color:currentColor;border-right-width:0}
+#screen i.face-s::after{bottom:0;left:50%;margin-left:-.22em;border-top-color:currentColor;border-bottom-width:0}
+#screen i.face-w::after{left:0;top:50%;margin-top:-.22em;border-right-color:currentColor;border-left-width:0}
 #screen i.face.hero::after{opacity:1}
