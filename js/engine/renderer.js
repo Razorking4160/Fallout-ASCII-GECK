@@ -6,14 +6,28 @@
 
   const D = { CELLS: [], SIGS: [], NC: 0, NR: 0 };
 
-  /* The cell size follows the space the shell actually has. Sizing it from a
-     fixed CSS font-size made a wide map spill out of its panel on a phone. */
-  function fitGrid(cols, rows) {
-    const sc = U.el('screen'), app = U.el('app');
+  /* The width the board has to live in: the shell's own width, not the CSS
+     font-size guess, because a wide map used to spill out of its panel. */
+  function shellWidth() {
+    const app = U.el('app');
+    const w = (app && app.clientWidth) || document.documentElement.clientWidth || window.innerWidth || 320;
+    return Math.max(220, w);
+  }
+
+  /* Fewer columns on a narrow screen instead of shrinking every cell: a phone
+     shows a 20-column window of the map at a readable cell size. */
+  function viewCols(availW) {
+    const book = WA.game.VW || 25;
+    return Math.max(13, Math.min(book, Math.floor(availW / 17)));
+  }
+
+  /* The cell size follows the space the shell actually has. */
+  function fitGrid(cols, rows, availW) {
+    const sc = U.el('screen');
     if (!sc) return;
-    const shellW = (app && app.clientWidth) || document.documentElement.clientWidth || 320;
-    const availW = Math.max(150, shellW - 38);
-    const availH = Math.max(110, (window.innerHeight || 640) - 330);
+    // Leave room for the log and the pad; a short landscape screen keeps a
+    // floor so the map stays legible rather than collapsing.
+    const availH = Math.max(150, (window.innerHeight || 640) - 320);
     const size = Math.min(availW / (cols * 0.85), availH / (rows * 0.85), 28);
     const px = Math.max(8, Math.round(size * 10) / 10) + 'px';
     if (sc.style.fontSize !== px) sc.style.fontSize = px;
@@ -130,13 +144,14 @@
   function draw() {
     const S = WA.game.S;
     if (!S) return;
-    const VW = WA.game.VW, VH = WA.game.VH;
+    const availW = shellWidth() - 38;
+    const VW = viewCols(availW), VH = WA.game.VH;
     const cols = Math.min(S.w, VW), rows = Math.min(S.h, VH);
     const cx = Math.max(0, Math.min(S.w - VW, S.px - (VW >> 1)));
     const cy = Math.max(0, Math.min(S.h - VH, S.py - (VH >> 1)));
     const vis = S.vis || WA.vis.compute(S);
     const light = S.light || WA.light.compute(S);
-    fitGrid(cols, rows);
+    fitGrid(cols, rows, availW);
     ensureCells(cols, rows);
 
     for (let vy = 0; vy < rows; vy++) {
@@ -189,12 +204,21 @@
     WA.save.queueAutosave();
   }
 
-  // Re-measure glyphs and rebuild the grid after rotation or resize.
-  addEventListener('resize', () => {
-    U.resetGlyphWidths();
-    D.NC = D.NR = 0;
-    if (WA.game.S) draw();
-  });
+  // Re-fit after rotation, resize or a mobile URL-bar change. Columns are
+  // recomputed, so the grid rebuilds instead of keeping the old width.
+  let refitFrame = 0;
+  function refit() {
+    if (refitFrame) return;
+    refitFrame = requestAnimationFrame(() => {
+      refitFrame = 0;
+      U.resetGlyphWidths();
+      D.NC = D.NR = 0;
+      if (WA.game.S) draw();
+    });
+  }
+  addEventListener('resize', refit);
+  addEventListener('orientationchange', refit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', refit);
 
   WA.view = { draw, reset, ensureCells, hud };
 })(window.WA = window.WA || {});

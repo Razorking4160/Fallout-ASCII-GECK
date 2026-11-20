@@ -267,14 +267,11 @@ body.modal-open{overflow:hidden}
 .symgrid{display:flex;flex-wrap:wrap;gap:4px}
 .symbtn{width:32px;height:32px;font-size:17px;padding:0;border-radius:4px}
 
-/* Facing: an arrow on the cell of a character, pointing where they aim. The
-   player's arrow is solid; an NPC's is dimmer so the grid stays calm. It is a
-   glyph rather than a CSS triangle so it reads at phone cell sizes, and the
-   cell is lifted above its neighbours so a sideways arrow is never covered. */
+/* Facing: a solid bar along the edge the character is aiming at, in that
+   character's own colour. A bar reads at any cell size and on any theme, where
+   a small caret beside the glyph disappeared into it. */
 #screen i.face{position:relative;z-index:1}
-#screen i.face::after{position:absolute;font-size:.62em;line-height:1;opacity:.8;pointer-events:none;text-shadow:0 0 2px currentColor}
-#screen i.face-n::after{content:"▲";top:-.1em;left:50%;margin-left:-.31em}
-#screen i.face-s::after{content:"▼";bottom:-.12em;left:50%;margin-left:-.31em}
-#screen i.face-e::after{content:"▶";right:-.08em;top:50%;margin-top:-.31em}
-#screen i.face-w::after{content:"◀";left:-.08em;top:50%;margin-top:-.31em}
-#screen i.face.hero::after{opacity:1}
+#screen i.face-n{box-shadow:inset 0 .2em 0 var(--warn)}
+#screen i.face-s{box-shadow:inset 0 -.2em 0 var(--warn)}
+#screen i.face-e{box-shadow:inset -.2em 0 0 var(--warn)}
+#screen i.face-w{box-shadow:inset .2em 0 0 var(--warn)}
