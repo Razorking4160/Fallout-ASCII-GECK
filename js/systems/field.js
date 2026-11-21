@@ -386,6 +386,7 @@
     s.sneak = !s.sneak;
     s.sneakSpotted = false;
     s.sneakMoved = false;
+    s.sneakRun = false;
     s.stealthLight = null;
     say(s.sneak
       ? `You crouch low and move quietly (Sneak ${WA.skills.value('sneak')}%).`
@@ -406,8 +407,21 @@
     s.sneak = false;
     s.sneakSpotted = false;
     s.sneakMoved = false;
+    s.sneakRun = false;
     s.stealthLight = null;
     say('You break cover.');
+  }
+
+  /* Running is a separate pace, not a second stance: it sets the cost of a free
+     step and, under cover, the noise the next detection roll has to beat. */
+  function toggleRun() {
+    const s = S();
+    if (!s || s.dead) return;
+    s.run = !s.run;
+    say(s.run
+      ? 'You move at a run — 2 AP a step, and loud.'
+      : 'You slow to a walk — 1 AP a step.');
+    refresh();
   }
 
   // A sneak attack only lands on an enemy that has not noticed you.
@@ -432,7 +446,8 @@
       (WA.light && WA.light.stealth ? WA.light.stealth(s) : 0.5);
     const turned = e ? U.turnedFrom(s.face || 's', e.x - s.px, e.y - s.py) : false;
     const difficulty = 25 + sight * 2
-      + (s.sneakMoved ? 15 : 0)
+      // A run is heard before a walk is; a still crouch is quietest.
+      + (s.sneakRun ? 35 : s.sneakMoved ? 15 : 0)
       + Math.round((light - 0.5) * 40)
       - Math.max(0, d - 2) * 3
       // A higher difficulty is harder to beat, so a turned back lowers it.
@@ -502,6 +517,8 @@
 
     lines.push(`<div class="fieldrow"><span>Sneak <small class="dim">${sneakStatus()} · ${WA.skills.value('sneak')}% · ${sneakLight()}</small></span>` +
       button(s.sneak ? 'Stand' : 'Sneak', 'sneak') + '</div>');
+    lines.push(`<div class="fieldrow"><span>Pace <small class="dim">${s.run ? 'RUN · 2 AP a step' : 'WALK · 1 AP a step'}</small></span>` +
+      button(s.run ? 'Walk' : 'Run', 'run') + '</div>');
     return `<div class="fieldpanel">${lines.join('')}</div>`;
   }
 
@@ -513,9 +530,10 @@
     if (action === 'scan') return scanTraps();
     if (action === 'disarm') return disarmTrap(x, y);
     if (action === 'sneak') return toggleSneak();
+    if (action === 'run') return toggleRun();
   }
 
-  WA.field = { act, html, firstAid, doctor, repair, repairObject, nearbyRepairs, scanTraps, disarmTrap, toggleSneak,
+  WA.field = { act, html, firstAid, doctor, repair, repairObject, nearbyRepairs, scanTraps, disarmTrap, toggleSneak, toggleRun,
     sneakAttack, breakSneak, spotted, staysHidden, sneakChance, sneakLight, isTrap, nearbyTraps, sneakStatus,
     containerTrapAt, containerTrapStatus, springContainer,
     reset: () => { FOUND = []; FOUND_MAP = ''; } };

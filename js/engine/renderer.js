@@ -184,6 +184,9 @@
       `<span class="dim" title="Facing ${U.esc(S.face || 's')}">${U.arrow(S.face || 's')}</span>` +
       `<span class="${S.hp <= hp * 0.3 ? 'bad' : ''}">HP ${S.hp}/${hp}</span>` +
       `<span class="${(S.ap | 0) <= 0 ? 'warn' : ''}">AP ${S.ap | 0}/${WA.char.maxAp()}</span>` +
+      (S.sneak
+        ? `<span class="${S.sneakSpotted ? 'bad' : 'dim'}">${S.sneakSpotted ? 'DETECTED' : 'SNEAK'}</span>`
+        : (S.run ? '<span class="warn">RUN</span>' : '')) +
       `<span>LV${S.lvl}${S.pts ? '*' : ''} ${S.lvl >= WA.scale.CAP ? 'MAX' : S.xp + '/' + WA.char.need()}</span><span>Caps ${S.caps}</span><span>Stim ${S.stims}</span>` +
       (rads ? `<span class="warn">RADS ${rads}</span>` : '') +
       (limb ? `<span class="bad">CRIPPLED ${U.esc(limb)}</span>` : '') +

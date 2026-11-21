@@ -11,15 +11,16 @@
     'Beyond the vault door: rust, radiation, and the ruins of the old world.',
     'Find a replacement chip. Save the vault. Survive the wasteland.'
   ];
+  // The vault door above the menu: the wheel and the number the story is
+  // about, drawn in 17 columns so it sits inside the shell on a phone.
   const ART = [
-    '       _____________',
-    '      /             \\',
-    '     /   ___   ___   \\',
-    '    |   |   | |   |   |',
-    '    |   | O | | O |   |',
-    '    |   |___| |___|   |',
-    '     \\               /',
-    '      \\_____________/'
+    '   +------------+',
+    '   |            |',
+    '   |  +------+  |',
+    '   |  |  13  |  |',
+    '   |  +------+  |',
+    '   |            |',
+    '   +------------+'
   ].join('\n');
 
   const START_DELAY = 1100, LINE_DELAY = 1600;
@@ -264,8 +265,8 @@
     });
     box.addEventListener('change', e => {
       if (!WA.settings) return;
-      if (e.target.id === 'optSound') WA.settings.setSound(e.target.checked);
-      else if (e.target.id === 'optAnim') WA.settings.setAnim(e.target.checked);
+      if (e.target.id === 'optAnim') WA.settings.setAnim(e.target.checked);
+      else if (e.target.id === 'optSound') WA.settings.setSound(e.target.checked);
       else if (e.target.id === 'optCrt') WA.settings.setCrt(e.target.checked);
       else       if (e.target.id === 'optFog') WA.settings.setFog(e.target.checked);
       if (e.target.id === 'packfile' && e.target.files && e.target.files[0]) loadPackFile(e.target.files[0]);

@@ -30,6 +30,11 @@
       floor_metal: { glyph: '▬', name: 'Metal floor', c: 'dim' },
       floor_gravel: { glyph: '∴', name: 'Gravel', c: 'dim' },
       rubble: { glyph: '▨', name: 'Rubble', solid: 1, c: 'dim' },
+      // Ground decoration: passable, no effect. They exist so a long run of
+      // plain floor reads as a place instead of a blank grid.
+      ash: { glyph: '▄', name: 'Ash drift', c: 'dim' },
+      weeds: { glyph: '¨', name: 'Dry weeds', c: 'good' },
+      rebar: { glyph: '¦', name: 'Twisted rebar', c: 'warn' },
       water_shallow: { glyph: '≈', name: 'Shallow water', c: 'good', heal: 1, msg: 'You wade through clean water. +1 HP.' },
       acid_pool: { glyph: '◌', name: 'Acid pool', c: 'bad', hurt: 2, dt: 'poison', onHit: 'poison', dur: 2, mag: 2, msg: 'Acid eats through your boots!' },
       fire_vent: { glyph: '♨', name: 'Fire vent', c: 'bad', hurt: 2, dt: 'fire', onHit: 'burn', dur: 2, mag: 2, trap: 1, msg: 'A jet of flame roars out of the floor!' },
@@ -819,7 +824,7 @@
         "###+######+#####+#############",
         "#....c.......................#",
         "#..r.......##.......$.....g..#",
-        "#..........#~~~............!.#",
+        "#..........#~~~.....▄......!.#",
         "#.....$....................r.#",
         "#............................#",
         "#....##..................##..#",
@@ -834,16 +839,16 @@
         "#..N.&c.C..##......#",
         "#....~~.....a...g..#",
         "#..p=......λr..ʘ!..#",
-        "#.....G...%........#",
+        "#.....G...%...¨....#",
         "####################"
       ], exits: { '2,2': 'vault', '18,2': 'ruins' } },
       ruins: { name: 'Wasteland Ruins', amb: 0.42, indoor: false, weather: 'fog', ambience: 'wind', rows: [
         "########################",
         "#@..*...>..##....##....#",
-        "#..........##....##.=$.#",
+        "#....¨.....##....##.=$.#",
         "#..###...........#..>..#",
         "#..#.....##..%g......ς~#",
-        "#..#....F##.......##...#",
+        "#..#..¦.F##.......##...#",
         "#....!...♦..#...^.##...#",
         "#####.KL..⚙.#..........#",
         "#......~~...#.ƒ..P.....#",
@@ -865,7 +870,7 @@
         "#·········≡·······c······#",
         "#........................#",
         "#..~~....g..........c....#",
-        "#..~~.......▬.d........r.#",
+        "#..~~....▄..▬.d........r.#",
         "#........................#",
         "#..$.....!......%......c.#",
         "#........................#",
@@ -883,7 +888,7 @@
         "#..............F...#",
         "#.....r......r.....#",
         "#...g.............%#",
-        "#.c............n...#",
+        "#.c.....¨......n...#",
         "####################"
       ], exits: { '0,5': 'bypass' } }
     },
@@ -914,7 +919,7 @@
   };
 
   // Legacy symbol -> ID table. Kept so old text maps and old saved Forge data still load.
-  const LEG = { '#': 'wall', '.': 'floor', '+': 'door', '/': 'door_open', T: 'terminal', '~': 'rad_puddle', '>': 'exit', r: 'radroach', g: 'feral_ghoul', d: 'feral_dog', q: 'raider_gunner', v: 'mirelurk', P: 'protectron', $: 'caps', '!': 'stimpak', '%': 'radaway', '&': 'repair_kit', '=': 'ammo_10mm', '^': 'ammo_ecell', b: 'baseball_bat', p: 'pistol_10mm', l: 'laser_pistol', a: 'leather_armor', A: 'combat_armor', S: 'rust_sentinel', U: 'yao_guai', 'ς': 'radscorpion_matriarch', N: 'mira', V: 'vale', K: 'keeper', 'ƒ': 'fence', '⚙': 'generator_broken', R: 'raider', w: 'clean_water', x: 'toxic_waste', o: 'nuka_cola', f: 'cram', m: 'irradiated_meat', k: 'vault_key', B: 'buffout', j: 'jet', M: 'medx', '*': 'grenade', i: 'molotov', c: 'crate', C: 'mira_cache', F: 'footlocker', n: 'bobby_pin', G: 'strongbox', L: 'market_lockbox', H: 'safe', D: 'secure_door', '♦': 'dealer', 'Ω': 'rook', 'λ': 'vera', 'ʘ': 'ash', 'Ʀ': 'raider_rivet', '·': 'road', '≡': 'bridge_broken', '≈': 'pump_broken', '▬': 'wrecked_car', '♨': 'campfire', '◍': 'glowing_fungus' };
+  const LEG = { '#': 'wall', '.': 'floor', '▄': 'ash', '¨': 'weeds', '¦': 'rebar', '+': 'door', '/': 'door_open', T: 'terminal', '~': 'rad_puddle', '>': 'exit', r: 'radroach', g: 'feral_ghoul', d: 'feral_dog', q: 'raider_gunner', v: 'mirelurk', P: 'protectron', $: 'caps', '!': 'stimpak', '%': 'radaway', '&': 'repair_kit', '=': 'ammo_10mm', '^': 'ammo_ecell', b: 'baseball_bat', p: 'pistol_10mm', l: 'laser_pistol', a: 'leather_armor', A: 'combat_armor', S: 'rust_sentinel', U: 'yao_guai', 'ς': 'radscorpion_matriarch', N: 'mira', V: 'vale', K: 'keeper', 'ƒ': 'fence', '⚙': 'generator_broken', R: 'raider', w: 'clean_water', x: 'toxic_waste', o: 'nuka_cola', f: 'cram', m: 'irradiated_meat', k: 'vault_key', B: 'buffout', j: 'jet', M: 'medx', '*': 'grenade', i: 'molotov', c: 'crate', C: 'mira_cache', F: 'footlocker', n: 'bobby_pin', G: 'strongbox', L: 'market_lockbox', H: 'safe', D: 'secure_door', '♦': 'dealer', 'Ω': 'rook', 'λ': 'vera', 'ʘ': 'ash', 'Ʀ': 'raider_rivet', '·': 'road', '≡': 'bridge_broken', '≈': 'pump_broken', '▬': 'wrecked_car', '♨': 'campfire', '◍': 'glowing_fungus' };
 
   WA.GAME = GAME;
   WA.LEG = LEG;

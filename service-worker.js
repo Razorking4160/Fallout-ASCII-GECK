@@ -123,6 +123,7 @@
 /* 0.74.0: shared full-height Pip-Boy with labelled sections. */
 /* 0.75.0: the Pip-Boy opens inside the play pane instead of over the whole studio. */
 /* 0.75.1: every game panel, the backdrop and the menu open inside the play pane. */
+/* 0.76.0: the play pane shows melee swings and dismemberment, the new ground tiles, the vault-door menu and the walk/run pace. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

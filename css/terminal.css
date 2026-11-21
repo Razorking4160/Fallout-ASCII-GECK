@@ -45,9 +45,14 @@ body.noanim #crt::after{animation:none}
 .fx-num.fx-own{color:#ff4d4d}
 .fx-miss{color:var(--dim);text-shadow:0 0 3px #000;animation:fxnum .56s ease-out forwards}
 .fx-death{color:#ff4d4d;text-shadow:0 0 6px #ff4d4d;animation:fxdeath .46s ease-out forwards}
+/* A melee swing arcs over the attacker; chips fly out of a body that comes apart. */
+.fx-swing{color:#e9ffe9;text-shadow:0 0 6px rgba(255,255,255,.55);animation:fxswing .26s ease-out forwards}
+.fx-chunk{color:#ff6b6b;text-shadow:0 0 4px rgba(110,0,0,.9);animation:fxchunk .62s cubic-bezier(.2,.7,.4,1) forwards}
 @keyframes fxshot{40%{opacity:.9}100%{opacity:0}}
 @keyframes fxhit{0%{opacity:.95;transform:scale(1.12)}100%{opacity:0;transform:scale(1)}}
 @keyframes fxnum{0%{opacity:0;transform:translateY(.15em)}18%{opacity:1}100%{opacity:0;transform:translateY(-.95em)}}
 @keyframes fxdeath{0%{opacity:1;transform:scale(.7)}60%{opacity:.9}100%{opacity:0;transform:scale(1.5) rotate(25deg)}}
+@keyframes fxswing{0%{opacity:0;transform:scale(.6) rotate(-18deg)}30%{opacity:1}100%{opacity:0;transform:scale(1.4) rotate(16deg)}}
+@keyframes fxchunk{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--gx,0),var(--gy,-1em)) scale(.55)}}
 #grid{display:block;margin:0 auto;image-rendering:pixelated;cursor:crosshair}
 #edit input[type="range"]{width:auto;flex:1;padding:0;min-width:0}

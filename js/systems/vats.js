@@ -115,6 +115,8 @@
     if (s.dead || s.hp <= 0) { VS = 0; return ui(); }
     const ap = cost();
     if (s.ap < ap) { VS = 1; return ui(); }
+    // An aimed melee strike swings just like a bump attack does.
+    if (WA.fx && (wp.range || 1) <= 1) WA.fx.swing(s.px, s.py, VT.x - s.px, VT.y - s.py);
     WA.inv.spendAmmo(ammoId);
     if (WA.weapons.use() === 'jam') {
       WA.game.say(`Your ${wp.name} jams!`);

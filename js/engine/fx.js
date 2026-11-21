@@ -31,7 +31,7 @@
   /* One short-lived element over a world cell. A cell is only drawn when the
      camera covers it, so the renderer is asked where it painted that cell
      rather than this guessing a position. */
-  function at(x, y, cls, text, ms, scale) {
+  function at(x, y, cls, text, ms, scale, vars) {
     if (!animate()) return false;
     const box = WA.view && WA.view.spot ? WA.view.spot(x, y) : null;
     const hostEl = box && host();
@@ -45,6 +45,7 @@
     el.style.width = box.w + 'px';
     el.style.height = box.h + 'px';
     el.style.fontSize = (box.h * (scale || 1)) + 'px';
+    if (vars) for (const k in vars) el.style.setProperty(k, vars[k]);
     hostEl.appendChild(el);
     setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, ms || 700);
     return true;
@@ -53,6 +54,30 @@
   const shot = (x, y) => at(x, y, 'fx-shot', '', 200);
   const death = (x, y) => at(x, y, 'fx-death', '✳', 460);
   const miss = (x, y) => at(x, y, 'fx-miss', 'miss', 560, 0.5);
+
+  /* A melee blow traced over the attacker. The glyph follows the direction of
+     the swing, so a blow to the left reads as one instead of a generic flash. */
+  function swing(x, y, dx, dy) {
+    if (!dx && !dy) return at(x, y, 'fx-swing', '✦', 260, 1.1);
+    const g = !dy ? '—' : !dx ? '│' : dx * dy > 0 ? '╲' : '╱';
+    return at(x, y, 'fx-swing', g, 260, 1.15);
+  }
+
+  /* Dismemberment: a killing blow or a called shot into a limb throws a few
+     chips out of the cell. Decoration only -- the body is already gone, or the
+     limb is already counted as crippled. */
+  function gore(x, y, dx, dy) {
+    if (!animate()) return false;
+    let shown = false;
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 ? 1 : -1;
+      const gx = (dx ? Math.sign(dx) : side) * (0.35 + Math.random() * 0.85);
+      const gy = (dy ? Math.sign(dy) : -1) * (0.25 + Math.random() * 0.7) + (Math.random() - 0.5) * 0.5;
+      shown = at(x, y, 'fx-chunk', i % 3 ? '·' : '*', 620, 0.75,
+        { '--gx': gx.toFixed(2) + 'em', '--gy': gy.toFixed(2) + 'em' }) || shown;
+    }
+    return shown;
+  }
 
   /* A hit shows its number, red over you and amber over anything else. */
   function hit(x, y, amount, onPlayer) {
@@ -66,5 +91,5 @@
     if (layer) layer.textContent = '';
   }
 
-  WA.fx = { at, shot, hit, death, miss, clear };
+  WA.fx = { at, swing, gore, shot, hit, death, miss, clear };
 })(window.WA = window.WA || {});

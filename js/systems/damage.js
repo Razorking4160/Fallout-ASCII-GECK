@@ -74,10 +74,13 @@
     return hit;
   }
 
-  function slay(e, msg) {
+  function slay(e, msg, gore) {
     const s = WA.game.S;
     if (!e || !e.d || e.hp > 0 || !s || !Array.isArray(s.ents) || !s.ents.includes(e)) return false;
-    if (WA.fx) WA.fx.death(e.x, e.y);
+    if (WA.fx) {
+      WA.fx.death(e.x, e.y);
+      if (gore) WA.fx.gore(e.x, e.y);
+    }
     if (WA.sfx) WA.sfx.death();
     if (WA.combat && WA.combat.kill) WA.combat.kill(e, msg);
     return true;

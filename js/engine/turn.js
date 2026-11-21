@@ -9,9 +9,9 @@
   // turn that is still playing out holds the player the same way.
   const paused = () => WA.ui.paused() || busy;
 
-  // A step is one point. Attacks pass their own cost (see combat.attackCost),
-  // so a round is about two rifle shots or a handful of steps.
-  const STEP = 1;
+  // A step is one point, a running step two. Attacks pass their own cost (see
+  // combat.attackCost), so a round is about two rifle shots or a handful of steps.
+  const STEP = 1, RUN_STEP = 2;
 
   /* ---------- the world's turn -----------------------------------------
      The enemy phase is played out one action per beat and the board is redrawn
@@ -50,6 +50,7 @@
     const live = WA.game.S === s;
     if (live) {
       s.sneakMoved = false;
+      s.sneakRun = false;
       s.stealthLight = null;
       collapse(s);
     }
@@ -183,7 +184,10 @@
     if (force && WA.pip && WA.pip.isOpen() && WA.pip.render) WA.pip.render();
   }
 
-  function playerMove(dx, dy, tgt) {
+  /* `running` is a one-shot run (Shift + a direction); the run pace on the
+     field kit makes every free step a run instead. Either way a run costs two
+     AP and, while sneaking, is much easier to hear. */
+  function playerMove(dx, dy, tgt, running) {
     const s = S();
     if (!s || s.dead || paused()) return;
     if (WA.combat) WA.combat.initiative();
@@ -193,9 +197,11 @@
     s.face = U.faceTo(dx, dy) || s.face || 's';
     const nx = s.px + dx, ny = s.py + dy;
     const e = tgt || WA.game.entAt(nx, ny);
+    // An attack is never a run: it pays its weapon's cost instead.
+    const run = !e && (running || s.run);
     let used = true, search = '';
     // A step costs one point; walking into an enemy pays the weapon's cost.
-    let cost = STEP;
+    let cost = run ? RUN_STEP : STEP;
 
     if (e) {
       if (e.d && e.d.ally) {
@@ -217,6 +223,8 @@
         const sneak = WA.field ? WA.field.sneakAttack(e) : false;
         WA.weapons.use();
         const wp = s.weapon ? WA.GAME.items[s.weapon] : null;
+        // A swing is shown for every melee attempt, hit or miss: fists count too.
+        if (WA.fx && (!wp || (wp.range || 1) <= 1)) WA.fx.swing(s.px, s.py, e.x - s.px, e.y - s.py);
         cost = WA.combat ? WA.combat.attackCost(wp) : 3;
         const skill = WA.skills.weaponSkill(wp);
         if (WA.traits && WA.traits.jinxed() && Math.random() < 0.05) {
@@ -247,7 +255,7 @@
         else if (t.msg) WA.game.say(t.msg);
       } else {
         s.px = nx; s.py = ny;
-        if (s.sneak) s.sneakMoved = true;
+        if (s.sneak) { s.sneakMoved = true; if (run) s.sneakRun = true; }
         const k = nx + ',' + ny;
         const here = s.items[k] && WA.GAME.items[s.items[k]];
         if (here && here.type === 'container' && WA.loot) search = k;

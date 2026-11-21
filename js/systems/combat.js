@@ -196,7 +196,9 @@
     }
     const hit = WA.damage.hurtEnemy(e, d, type, ammo);
 
-    if (WA.damage.slay(e)) return true;
+    if (WA.damage.slay(e, undefined, (wp.range || 1) <= 1 || type === 'energy' || crit)) return true;
+    // A called shot into a limb tears something loose, even when it survives.
+    if (o.cripple && WA.fx) WA.fx.gore(e.x, e.y, e.x - s.px, e.y - s.py);
 
     const notes = [];
     if (hit.res >= 0.25) notes.push('resisted');
@@ -281,6 +283,7 @@
      AC and resistances, and go down through the party roster. */
   function allyHit(e, ranged, ally) {
     const d = ally.d || {};
+    if (WA.fx && !ranged) WA.fx.swing(e.x, e.y, ally.x - e.x, ally.y - e.y);
     if (WA.traits && WA.traits.jinxed() && Math.random() < 0.05) {
       WA.game.say(`Jinxed! The ${e.d.name} fumbles and misses ${d.name}.`);
       return;
@@ -311,6 +314,7 @@
     const s = S();
     if (ranged && WA.sfx) WA.sfx.shot();
     if (ally) return allyHit(e, ranged, ally);
+    if (WA.fx && !ranged) WA.fx.swing(e.x, e.y, s.px - e.x, s.py - e.y);
     if (WA.traits && WA.traits.jinxed() && Math.random() < 0.05) {
       WA.game.say(`Jinxed! The ${e.d.name} fumbles and misses.`);
       return;
@@ -393,7 +397,7 @@
       if (d.onHit) WA.status.addPlayer(d.onHit, d.dur || 3, d.mag || 1);
     }
 
-    for (const e of caught) WA.damage.slay(e, `The ${e.d.name} is blown apart.`);
+    for (const e of caught) WA.damage.slay(e, `The ${e.d.name} is blown apart.`, true);
   }
 
   function throwItem() {
