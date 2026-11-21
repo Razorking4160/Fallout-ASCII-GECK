@@ -115,6 +115,7 @@
 /* 0.67.0: shared combat feedback overlay synced from the game. */
 /* 0.68.0: shared synthesised sound effects and Sound setting synced from the game. */
 /* 0.69.0: shared ambient loops and place ambience synced from the game. */
+/* 0.70.0: shared table-driven ambience with gunfire ducking and a louder mix; maps keep their sound bed. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

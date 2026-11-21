@@ -62,7 +62,7 @@
   /* ---------- model <-> stored map ---------- */
   function toMap() {
     const things = [...Object.entries(ED.n), ...Object.entries(ED.o)].map(([k, id]) => [id, ...k.split(',').map(Number)]);
-    return WA.maps.pack({ name: ED.name, bg: ED.bg, amb: ED.amb, indoor: ED.indoor, weather: ED.weather, exits: ED.exits, start: ED.s, t: ED.t, things });
+    return WA.maps.pack({ name: ED.name, bg: ED.bg, amb: ED.amb, indoor: ED.indoor, weather: ED.weather, ambience: ED.ambience, exits: ED.exits, start: ED.s, t: ED.t, things });
   }
   function persist() {
     const m = toMap();
@@ -95,6 +95,7 @@
     ED = {
       id, name: m.name || id, bg: m.bg, amb: typeof m.amb === 'number' ? m.amb : 1,
       indoor: !!m.indoor, weather: m.weather || 'none',
+      ambience: typeof m.ambience === 'string' ? m.ambience : '',
       exits: { ...(m.exits || {}) }, s: start, o: {}, n: {}, t
     };
     for (const [tid, x, y] of m.things || []) {
@@ -111,9 +112,22 @@
     if (m.bg) $('mbg').value = m.bg;
     $('eindoor').checked = ED.indoor;
     $('eweather').value = ED.weather;
+    $('esnd').innerHTML = bedOptions(ED.ambience);
+    $('esnd').value = ED.ambience;
     const pc = Math.round(ED.amb * 100);
     $('eamb').value = pc;
     $('eambv').textContent = pc + '%';
+  }
+
+  /* The map's sound bed. The kinds come from the shared sound engine, so a
+     place added there shows up here; a pack naming one this build does not
+     have keeps its value instead of losing it on the next save. */
+  const BED_NAME = { hum: 'Vault hum', rain: 'Rain', wind: 'Wind', water: 'Water' };
+  function bedOptions(current) {
+    const kinds = (WA.sfx && WA.sfx.kinds ? WA.sfx.kinds : Object.keys(BED_NAME)).slice();
+    if (current && kinds.indexOf(current) < 0) kinds.push(current);
+    return '<option value="">Auto (indoor / weather)</option>' + kinds
+      .map(k => `<option value="${U.esc(k)}">${U.esc(BED_NAME[k] || k)}</option>`).join('');
   }
 
   function loadEd(id) {
@@ -688,6 +702,7 @@
       amb: typeof m.amb === 'number' ? m.amb : 1,
       indoor: !!m.indoor,
       weather: m.weather === 'rain' || m.weather === 'fog' ? m.weather : 'none',
+      ambience: typeof m.ambience === 'string' ? m.ambience.slice(0, 20) : '',
       w, h, rows: m.rows.map(r => String(r)), legend, exits, things, start
     };
   }
@@ -896,6 +911,11 @@
       persist();
       if (WA.game.S && WA.game.S.id === ED.id) WA.view.draw();
     };
+    $('esnd').onchange = () => {
+      ED.ambience = $('esnd').value;
+      persist();
+      if (WA.game.S && WA.game.S.id === ED.id) WA.view.draw();
+    };
   }
 
   async function init() {
@@ -915,6 +935,8 @@
     // Older saved maps have no ambient light: inherit it from the built-in map.
     for (const id in SAVED) {
       if (typeof SAVED[id].amb !== 'number' && BUILTIN[id] && typeof BUILTIN[id].amb === 'number') SAVED[id].amb = BUILTIN[id].amb;
+      // A map saved before sound beds existed keeps the built-in's bed.
+      if (typeof SAVED[id].ambience !== 'string' && BUILTIN[id] && typeof BUILTIN[id].ambience === 'string') SAVED[id].ambience = BUILTIN[id].ambience;
       WA.GAME.maps[id] = SAVED[id];
     }
 

@@ -197,6 +197,9 @@
         }
       }
     }
+    if (m.ambience !== undefined && (typeof m.ambience !== 'string' || m.ambience.length > 20)) {
+      errors.push(`${at}: ambience must be a short bed name`);
+    }
     if (m.exits !== undefined) {
       if (!isObj(m.exits)) errors.push(`${at}: exits must be an object`);
       else for (const key of Object.keys(m.exits)) {

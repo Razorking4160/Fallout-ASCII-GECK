@@ -7,11 +7,14 @@
    Sound is presentation only, like the turn pace and the fx layer: the rules
    never read it, and a missing AudioContext just means silence. Ambience runs
    under its own gain, outside the voice cap, so a firefight never starves it
-   and it never eats one of the short sounds. */
+   and it never eats one of the short sounds. A shot ducks that gain for a
+   moment so the hit lands on top of the room instead of inside it. */
 (function (WA) {
   'use strict';
   const MAX_VOICES = 6;
+  const MASTER = 0.75;      // the whole mix; twice to three times the old 0.3
   const AMB_LEVEL = 0.5;
+  const DUCK = 0.35;        // where the bed sits while gunfire is ringing
   let ctx = null, master = null, noise = null, loopNoise = null, armed = false;
   // Each voice holds its slot until its release time. Checking that list is
   // better than a setTimeout: a backgrounded tab throttles timers, which would
@@ -34,8 +37,17 @@
       try {
         ctx = new AC();
         master = ctx.createGain();
-        master.gain.value = 0.3;
-        master.connect(ctx.destination);
+        master.gain.value = MASTER;
+        // Six voices plus a bed can peak past full scale at this level; a
+        // limiter keeps the louder mix from cracking instead of clipping it.
+        const limit = ctx.createDynamicsCompressor();
+        limit.threshold.value = -8;
+        limit.knee.value = 6;
+        limit.ratio.value = 12;
+        limit.attack.value = 0.004;
+        limit.release.value = 0.15;
+        master.connect(limit);
+        limit.connect(ctx.destination);
       } catch (e) { ctx = null; return null; }
     }
     if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
@@ -110,6 +122,7 @@
   }
 
   const shot = () => play(c => {
+    duck(c);
     hiss(c, { dur: 0.13, cut: 3200, to: 420, gain: 0.26 });
     tone(c, { type: 'square', from: 190, to: 62, dur: 0.09, gain: 0.12 });
   });
@@ -124,6 +137,7 @@
   }
 
   const death = () => play(c => {
+    duck(c);
     tone(c, { type: 'sawtooth', from: 170, to: 40, dur: 0.42, gain: 0.14 });
     hiss(c, { dur: 0.34, cut: 1800, to: 150, gain: 0.14 });
   });
@@ -142,8 +156,9 @@
   const confirm = () => pickup();
 
   /* An ambience bed: looping filtered noise. `wobble` is a slow sine on the
-     filter's cutoff, which is what turns flat hiss into wind, rain or moving
-     water. Everything hangs off ambGain so a place change can fade it as one. */
+     filter's cutoff, written as [rate, amount], which is what turns flat hiss
+     into wind, rain or moving water. Everything hangs off ambGain so a place
+     change can fade it as one. */
   function bed(c, o) {
     if (!loopNoise) loopNoise = noiseBuffer(c, 2);
     const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
@@ -161,8 +176,8 @@
     ambNodes.push(src, f, g);
     if (o.wobble) {
       const lfo = c.createOscillator(), depth = c.createGain();
-      lfo.frequency.value = o.wobble.rate;
-      depth.gain.value = o.wobble.amount;
+      lfo.frequency.value = o.wobble[0];
+      depth.gain.value = o.wobble[1];
       lfo.connect(depth);
       depth.connect(f.frequency);
       lfo.start(c.currentTime + 0.02);
@@ -206,79 +221,104 @@
     }, 700 + Math.random() * 2400));
   }
 
-  /* One builder per kind of place. A map names its kind with `ambience`; a map
-     without one falls back to its indoor flag and weather, so authored maps
-     from a content pack get something sensible. */
+  /* One row per kind of place: `bed` layers are noise, `drone` adds steady
+     tones and `drip` the odd water drop. A map names a row with its `ambience`
+     field, and WA.sfx.kinds is the list the studio offers. */
   const PLACES = {
     // A vault's air plant: low electrical hum with a breath of moving air.
-    hum(c) {
-      drone(c, 55, 0.05);
-      drone(c, 110, 0.022, 'triangle');
-      bed(c, { cut: 240, gain: 0.03, wobble: { rate: 0.06, amount: 90 } });
+    hum: {
+      drone: [[55, 0.05], [110, 0.022, 'triangle']],
+      bed: [{ cut: 240, gain: 0.03, wobble: [0.06, 90] }]
     },
     // Rain on open ground: a steady hiss over a low wind.
-    rain(c) {
-      bed(c, { type: 'highpass', cut: 900, gain: 0.05 });
-      bed(c, { cut: 1500, gain: 0.055, q: 0.5, wobble: { rate: 0.11, amount: 400 } });
-      bed(c, { cut: 320, gain: 0.05, wobble: { rate: 0.05, amount: 120 } });
-      drone(c, 48, 0.025);
+    rain: {
+      drone: [[48, 0.025]],
+      bed: [
+        { type: 'highpass', cut: 900, gain: 0.05 },
+        { cut: 1500, gain: 0.055, q: 0.5, wobble: [0.11, 400] },
+        { cut: 320, gain: 0.05, wobble: [0.05, 120] }
+      ]
     },
     // Ruins in fog: wind that rises and falls, with nothing else in it.
-    wind(c) {
-      bed(c, { cut: 430, gain: 0.09, q: 0.8, wobble: { rate: 0.07, amount: 230 } });
-      bed(c, { cut: 170, gain: 0.04, wobble: { rate: 0.03, amount: 60 } });
+    wind: {
+      bed: [
+        { cut: 430, gain: 0.09, q: 0.8, wobble: [0.07, 230] },
+        { cut: 170, gain: 0.04, wobble: [0.03, 60] }
+      ]
     },
     // Standing water and a dead pump: a wet bed with the odd drip.
-    water(c) {
-      bed(c, { cut: 520, gain: 0.055, q: 0.6, wobble: { rate: 0.09, amount: 180 } });
-      drone(c, 62, 0.03);
-      dripLoop(c);
+    water: {
+      drone: [[62, 0.03]],
+      bed: [{ cut: 520, gain: 0.055, q: 0.6, wobble: [0.09, 180] }],
+      drip: true
     }
   };
+  const KINDS = Object.keys(PLACES);
 
+  /* A map's named bed wins; anything this build does not have, and a map with
+     no name at all, falls back to its indoor flag and weather. */
   function place(S) {
     const m = S && WA.GAME && WA.GAME.maps && WA.GAME.maps[S.id];
     if (!m) return '';
-    if (m.ambience) return PLACES[m.ambience] ? m.ambience : '';
-    if (m.indoor) return 'hum';
-    return m.weather === 'rain' ? 'rain' : 'wind';
+    if (m.ambience && PLACES[m.ambience]) return m.ambience;
+    return m.indoor ? 'hum' : (m.weather === 'rain' ? 'rain' : 'wind');
   }
 
   function startAmbient(kind) {
-    const c = audio();
-    if (!c) return false;
+    const c = audio(), p = PLACES[kind];
+    if (!c || !p) return false;
     ambKind = kind;
     ambGain = c.createGain();
     const t = c.currentTime;
     ambGain.gain.setValueAtTime(0.0001, t);
     ambGain.gain.exponentialRampToValueAtTime(AMB_LEVEL, t + 1.4);
     ambGain.connect(master);
-    try { PLACES[kind](c); }
-    catch (e) { stopAmbient(); return false; }
+    try {
+      p.bed.forEach(o => bed(c, o));
+      (p.drone || []).forEach(d => drone(c, d[0], d[1], d[2]));
+      if (p.drip) dripLoop(c);
+    } catch (e) { stopAmbient(); return false; }
     return true;
   }
 
   function stopAmbient() {
     ambKind = '';
-    const c = ctx, g = ambGain, nodes = ambNodes, timers = ambTimers;
+    const c = ctx, g = ambGain, nodes = ambNodes;
     ambGain = null;
     ambNodes = [];
+    ambTimers.forEach(clearTimeout);
     ambTimers = [];
-    timers.forEach(clearTimeout);
     if (!g || !c) return;
+    const t = c.currentTime;
     try {
-      g.gain.cancelScheduledValues(c.currentTime);
-      g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), c.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.5);
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
     } catch (e) {}
     // Old and new beds cross-fade: the caller can start the next kind at once.
-    setTimeout(() => {
-      for (const n of nodes) {
-        try { if (n.stop) n.stop(); } catch (e) {}
-        try { n.disconnect(); } catch (e) {}
-      }
+    // The stops go on the audio clock, so a backgrounded tab still releases the
+    // nodes instead of throttling a timer and leaving them running for minutes.
+    let last = null;
+    for (const n of nodes) {
+      try { if (n.stop) { n.stop(t + 0.55); last = n; } } catch (e) {}
+    }
+    if (last) last.onended = () => {
+      for (const n of nodes) { try { n.disconnect(); } catch (e) {} }
       try { g.disconnect(); } catch (e) {}
-    }, 560);
+    };
+  }
+
+  /* Gunfire dips the bed rather than fighting it. The ramp back is short enough
+     to sit between shots and long enough not to pump. */
+  function duck(c) {
+    if (!ambGain || document.hidden) return;
+    const t = c.currentTime, g = ambGain.gain;
+    try {
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(Math.max(0.0001, g.value), t);
+      g.linearRampToValueAtTime(AMB_LEVEL * DUCK, t + 0.05);
+      g.linearRampToValueAtTime(AMB_LEVEL, t + 0.7);
+    } catch (e) {}
   }
 
   /* Called by the renderer with the state it is drawing. The same kind returns
@@ -306,8 +346,8 @@
     try {
       g.cancelScheduledValues(t);
       g.setValueAtTime(Math.max(0.0001, g.value), t);
-      g.linearRampToValueAtTime(muted ? 0.0001 : 0.3, t + 0.12);
-    } catch (e) { g.value = muted ? 0.0001 : 0.3; }
+      g.linearRampToValueAtTime(muted ? 0.0001 : MASTER, t + 0.12);
+    } catch (e) { g.value = muted ? 0.0001 : MASTER; }
   }
 
   // Coming back to the tab brings the place back up; leaving it hushes it.
@@ -321,6 +361,9 @@
     } catch (e) {}
   });
 
-  WA.sfx = { shot, hit, death, pickup, levelUp, confirm, unlock, on, ambient, setMuted };
+  WA.sfx = {
+    shot, hit, death, pickup, levelUp, confirm, unlock, on, ambient, setMuted,
+    kinds: KINDS
+  };
   unlock();
 })(window.WA = window.WA || {});

@@ -68,6 +68,10 @@ functions), job structure through `WA.quests.checkAuthored`, and dialogue patche
 name a shipped NPC with a dialogue tree. A pack can add enemies and items, but a job
 giver must already be a dialogue NPC in the game. Rejected packs are not stored.
 
+A map's **Sound bed** (its synthesised `ambience`) is part of the map record, so it
+survives pack export and import, and a bed this build does not know keeps its name in
+the editor instead of being dropped on the next save.
+
 In the game, **Menu → Content packs** imports a file or fetches a URL
 (`?pack=<url>` also works once), stores it in IndexedDB and applies it at boot. Every
 save records the pack fingerprint; the Load screen marks saves made under another pack.
