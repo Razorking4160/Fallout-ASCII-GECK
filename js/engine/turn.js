@@ -18,7 +18,7 @@
      between them, so a step reads as a step instead of a jump. The logic is
      still turn-based: the beat only paces presentation, and nothing in the
      rules reads a frame clock. */
-  const BEAT = 140;   // ms between world actions
+  const BEAT = 300;   // ms between world actions
   let busy = false, timer = 0, again = false;
 
   /* Animation off, or a system asked for less motion: run the phase at once. */
