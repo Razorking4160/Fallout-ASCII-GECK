@@ -109,9 +109,11 @@
     return sec('SKILL POINTS',
       `<div class="prow"><span>SKILL POINTS <b>${s.skillPoints | 0}</b></span>` +
         `<span class="dim">${tagged.length}/${slots} tags</span></div>` +
-      `<div class="dim" style="font-size:12px;margin:2px 0 4px">1 point = +1% (+2% tagged), to 200%. Tag up to ${slots} skills: +20% and double growth. Base values follow SPECIAL.</div>` +
+      `<div class="dim" style="font-size:12px;margin:2px 0 4px">1 point = +1% (+2% tagged), to 200%. Tag up to ${slots} skills: +20% and double growth. Base values follow SPECIAL.</div>`) +
+      // The field kit and rest panels carry their own frames, so they sit
+      // between the sections rather than inside one.
       (WA.field ? WA.field.html() : '') +
-      (WA.rest ? WA.rest.html() : '')) +
+      (WA.rest ? WA.rest.html() : '') +
       sec('SKILLS', rows);
   }
 
@@ -346,9 +348,10 @@
         `${typeof s.ending.karma === 'number' && WA.reputation ? ' · ' + WA.reputation.karmaTier(s.ending.karma).name : ''}</small></span>` +
         `<button data-end="open" style="width:64px;font-size:13px">Read</button></div>`
       : '';
-    return sec('DIFFICULTY', difficultyHtml()) + sec('WORLD TURN', speedHtml()) + sec('SOUND', soundHtml()) +
-      (bounty ? sec('BOUNTY', bounty) : '') + sec('SAVES', WA.save.panelHtml()) +
-      (ending ? sec('ENDING', ending) : '');
+    // One SETTINGS box: each row already names itself, so a box per setting was
+    // four frames saying what the rows said anyway.
+    return sec('SETTINGS', difficultyHtml() + speedHtml() + soundHtml()) +
+      sec('BOUNTY', bounty) + sec('SAVES', WA.save.panelHtml()) + sec('ENDING', ending);
   }
 
   function render() {

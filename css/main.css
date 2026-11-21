@@ -211,7 +211,7 @@ body.modal-open{overflow:hidden}
 #death{z-index:60}
 #pip{display:flex;flex-direction:column;height:calc(100vh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:hidden}
 #pip .pipbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}
-#pip .piptabs{flex:none;z-index:1;background:var(--panel);padding-top:2px}
+#pip .piptabs{flex:none;background:var(--panel);padding-top:2px}
 #pip .pipsec{border:1px dashed var(--dim);border-radius:5px;padding:3px 7px 5px;margin:8px 0 0}
 #pip .pipsec-h{font-size:10px;letter-spacing:.12em;color:var(--dim);margin-bottom:1px}
 #pip .prow{padding:2px 0}

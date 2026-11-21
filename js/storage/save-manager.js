@@ -409,8 +409,7 @@
 
   function panelHtml() {
     const b = (id, t) => `<button data-g="${id}" style="flex:1;height:36px;font-size:14px">${t}</button>`;
-    return `<hr style="border:0;border-top:1px solid var(--dim)">` +
-      `<div class="dim" style="font-size:12px">AUTOSAVE</div>` + row('auto', 'Auto', false) +
+    return `<div class="dim" style="font-size:12px">AUTOSAVE</div>` + row('auto', 'Auto', false) +
       `<div class="dim" style="font-size:12px;margin-top:4px">SLOTS</div>` +
       SLOTS.map((id, i) => row(id, 'Slot ' + (i + 1), true)).join('') +
       `<div class="row" style="margin-top:6px">${b('new', M.confirmNew ? 'Sure?' : 'New game')}${b('exp', 'Export')}${b('imp', 'Import')}</div>` +
