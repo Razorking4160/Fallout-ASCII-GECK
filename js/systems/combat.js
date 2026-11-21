@@ -189,6 +189,8 @@
     const type = wp.dt || (wp.range > 1 ? 'ballistic' : 'melee');
     if (o.cripple) e.slow = (e.slow || 0) + o.cripple;
     if (o.weak) e.weak = 1;
+    // The flash sits on the shooter, so it reads as coming from you.
+    if (WA.fx && (wp.range || 1) > 1) WA.fx.shot(s.px, s.py);
     const hit = WA.damage.hurtEnemy(e, d, type, ammo);
 
     if (WA.damage.slay(e)) return true;

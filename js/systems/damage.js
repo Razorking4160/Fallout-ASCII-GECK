@@ -53,6 +53,7 @@
     const shield = BYPASS_ARMOR[type] ? 0 : (WA.status ? WA.status.mod('resist') : 0);
     if (shield) value = Math.max(1, value - shield);
     s.hp -= value;
+    if (WA.fx) WA.fx.hit(s.px, s.py, value, true);
     if (!BYPASS_ARMOR[type] && raw > value) WA.weapons.wearArmor(raw - value);
     if (WA.rads) WA.rads.expose(type, value);
     const limb = WA.limbs ? WA.limbs.injure(s, value, type) : null;
@@ -64,13 +65,17 @@
      caller that has more to say can finish its line first. */
   function hurtEnemy(target, amount, type, ammo) {
     const hit = ammo ? againstAmmo(target, amount, type, ammo) : against(target, amount, type);
-    if (target && target.d) target.hp -= hit.value;
+    if (target && target.d) {
+      target.hp -= hit.value;
+      if (WA.fx) WA.fx.hit(target.x, target.y, hit.value, false);
+    }
     return hit;
   }
 
   function slay(e, msg) {
     const s = WA.game.S;
     if (!e || !e.d || e.hp > 0 || !s || !Array.isArray(s.ents) || !s.ents.includes(e)) return false;
+    if (WA.fx) WA.fx.death(e.x, e.y);
     if (WA.combat && WA.combat.kill) WA.combat.kill(e, msg);
     return true;
   }

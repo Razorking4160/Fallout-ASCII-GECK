@@ -4,7 +4,7 @@
   'use strict';
   const U = WA.util;
 
-  const D = { CELLS: [], SIGS: [], NC: 0, NR: 0, POS: new Map() };
+  const D = { CELLS: [], SIGS: [], NC: 0, NR: 0, POS: new Map(), CAM: null };
 
   /* The width the board has to live in: the shell's own width, not the CSS
      font-size guess, because a wide map used to spill out of its panel. */
@@ -65,7 +65,28 @@
     }
   }
 
-  function reset() { D.SIGS.fill('\u0000reset'); D.POS.clear(); }
+  function reset() {
+    D.SIGS.fill('\u0000reset');
+    D.POS.clear();
+    // Feedback marks belong to the map that was on screen, not the new one.
+    if (WA.fx) WA.fx.clear();
+  }
+
+  /* Where a world cell was painted, so a transient mark (fx.js) can sit over it.
+     Off-screen cells and the hidden half of a wide glyph have nowhere to draw. */
+  function spot(x, y) {
+    const c = D.CAM;
+    if (!c) return null;
+    const vx = x - c.x, vy = y - c.y;
+    if (vx < 0 || vy < 0 || vx >= c.cols || vy >= c.rows) return null;
+    const el = D.CELLS[vy * D.NC + vx];
+    if (!el || !el.isConnected || el.style.visibility === 'hidden') return null;
+    const box = el.getBoundingClientRect();
+    const crt = U.el('crt');
+    if (!crt) return null;
+    const base = crt.getBoundingClientRect();
+    return { left: box.left - base.left, top: box.top - base.top, w: box.width, h: box.height };
+  }
 
   /* A step is one cell, and one cell is a jump cut however slowly it is paced.
      Remember where each body was last painted so it can slide in from there: a
@@ -203,6 +224,9 @@
     const light = S.light || WA.light.compute(S);
     fitGrid(cols, rows, availW);
     ensureCells(cols, rows);
+    // Remembered for fx.js: a hit lands between draws and still needs to know
+    // where its cell is on screen right now.
+    D.CAM = { x: cx, y: cy, cols, rows };
 
     for (let vy = 0; vy < rows; vy++) {
       let covered = false;
@@ -273,5 +297,5 @@
   addEventListener('orientationchange', refit);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', refit);
 
-  WA.view = { draw, reset, ensureCells, hud };
+  WA.view = { draw, reset, ensureCells, hud, spot };
 })(window.WA = window.WA || {});

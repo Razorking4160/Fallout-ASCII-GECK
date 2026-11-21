@@ -28,5 +28,26 @@ body.noanim #crt::after{animation:none}
 @keyframes pu{50%{opacity:.35}}
 @keyframes bl{50%{opacity:0}}
 @keyframes rb{0%,100%{color:#ff4d4d}17%{color:#ffb84d}33%{color:#f2ff4d}50%{color:#4dff88}67%{color:#4dd2ff}83%{color:#b84dff}}
+
+/* Combat feedback (fx.js): seconds-long marks over the board -- a muzzle flash,
+   a hit, the damage number, a death burst. They sit above the cell grid and the
+   CRT texture so a redraw cannot wipe them, and they are decoration only: the
+   log is still the record. */
+#fx{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.fxpop{position:absolute;display:flex;align-items:center;justify-content:center;line-height:1;
+  pointer-events:none;border-radius:2px;will-change:transform,opacity}
+.fx-shot{background:rgba(255,176,0,.4);box-shadow:0 0 8px rgba(255,176,0,.75);
+  animation:fxshot .2s ease-out forwards}
+.fx-hit{background:rgba(255,77,77,.42);box-shadow:inset 0 0 0 1px rgba(255,77,77,.8);
+  animation:fxhit .23s ease-out forwards}
+.fx-num{font-weight:700;color:#ffb000;text-shadow:0 0 3px #000,0 0 3px #000;
+  animation:fxnum .7s ease-out forwards}
+.fx-num.fx-own{color:#ff4d4d}
+.fx-miss{color:var(--dim);text-shadow:0 0 3px #000;animation:fxnum .56s ease-out forwards}
+.fx-death{color:#ff4d4d;text-shadow:0 0 6px #ff4d4d;animation:fxdeath .46s ease-out forwards}
+@keyframes fxshot{40%{opacity:.9}100%{opacity:0}}
+@keyframes fxhit{0%{opacity:.95;transform:scale(1.12)}100%{opacity:0;transform:scale(1)}}
+@keyframes fxnum{0%{opacity:0;transform:translateY(.15em)}18%{opacity:1}100%{opacity:0;transform:translateY(-.95em)}}
+@keyframes fxdeath{0%{opacity:1;transform:scale(.7)}60%{opacity:.9}100%{opacity:0;transform:scale(1.5) rotate(25deg)}}
 #grid{display:block;margin:0 auto;image-rendering:pixelated;cursor:crosshair}
 #edit input[type="range"]{width:auto;flex:1;padding:0;min-width:0}
