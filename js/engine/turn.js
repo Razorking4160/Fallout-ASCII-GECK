@@ -18,7 +18,7 @@
      between them, so a step reads as a step instead of a jump. The logic is
      still turn-based: the beat only paces presentation, and nothing in the
      rules reads a frame clock. */
-  const BEAT = 110;   // ms between enemy actions
+  const BEAT = 140;   // ms between world actions
   let busy = false, timer = 0, again = false;
 
   /* Animation off, or a system asked for less motion: run the phase at once. */
@@ -63,7 +63,9 @@
       WA.view.draw();
       timer = setTimeout(beat, BEAT);
     };
-    beat();
+    // The first action waits a beat as well, so the player's own move is painted
+    // on its own before the world starts moving around it.
+    timer = setTimeout(beat, BEAT);
   }
 
   /* Companions take their turn after the enemies, once the player is safe, and
@@ -74,7 +76,7 @@
       WA.party.turn();
       return finish(s);
     }
-    WA.party.begin();
+    if (!WA.party.begin()) return finish(s);
     beats(s, WA.party, () => finish(s));
   }
 
@@ -84,7 +86,7 @@
       return allies(s);
     }
     busy = true;
-    WA.ai.begin();
+    if (!WA.ai.begin()) return allies(s);
     beats(s, WA.ai, () => allies(s));
   }
 

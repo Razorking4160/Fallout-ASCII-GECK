@@ -4,7 +4,7 @@
   'use strict';
   const U = WA.util;
 
-  const D = { CELLS: [], SIGS: [], NC: 0, NR: 0 };
+  const D = { CELLS: [], SIGS: [], NC: 0, NR: 0, POS: new Map() };
 
   /* The width the board has to live in: the shell's own width, not the CSS
      font-size guess, because a wide map used to spill out of its panel. */
@@ -65,7 +65,35 @@
     }
   }
 
-  function reset() { D.SIGS.fill('\u0000reset'); }
+  function reset() { D.SIGS.fill('\u0000reset'); D.POS.clear(); }
+
+  /* A step is one cell, and one cell is a jump cut however slowly it is paced.
+     Remember where each body was last painted so it can slide in from there: a
+     turn that resolves in one frame (a reaction, a rest, a burst of steps) then
+     reads as walking instead of a teleport. */
+  function remember(e, x, y) {
+    const was = D.POS.get(e);
+    D.POS.set(e, { x, y });
+    if (!was) return null;
+    const dx = was.x - x, dy = was.y - y;
+    if (!dx && !dy) return null;
+    // More than two cells is a spawn, a travel or a knockback, not a step.
+    if (Math.abs(dx) + Math.abs(dy) > 2) return null;
+    return { dx, dy };
+  }
+
+  function slide(el, step) {
+    if (WA.settings && !WA.settings.anim) return;
+    if (typeof el.animate !== 'function') return;
+    if (typeof matchMedia === 'function' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    try {
+      el.animate([
+        { transform: `translate(${step.dx}em, ${step.dy}em)` },
+        { transform: 'translate(0, 0)' }
+      ], { duration: 120, easing: 'ease-out' });
+    } catch (e) { /* an old engine without the Web Animations API */ }
+  }
 
   function hideCell(i) {
     if (D.SIGS[i] === '\u0000hide') return;
@@ -76,7 +104,7 @@
     el.textContent = '';
   }
 
-  function drawCell(vx, vy, ch, c, d, x, y, wide, op, lit) {
+  function drawCell(vx, vy, ch, c, d, x, y, wide, op, lit, step) {
     const i = vy * D.NC + vx;
     const sig = ch + '\u0001' + c + '\u0001' + (d.bg || '') + (d.glow ? 1 : '') + (d.fx || '') +
       (wide ? 'W' : '') + (lit ? 'L' : '') + '\u0001' + op.toFixed(2);
@@ -109,6 +137,7 @@
     el.style.opacity = op >= 0.999 ? '' : op.toFixed(2);
     el.textContent = ch;
     el.className = cls.join(' ');
+    if (step) slide(el, step);
   }
 
   function hud() {
@@ -214,11 +243,13 @@
         if (op > 0.999) op = 1;
         const lit = !!v && l >= 0.72;
         const wide = U.glyphWidth(ch) > 1 && vx < cols - 1;
-        drawCell(vx, vy, ch, c, d, x, y, wide, op, lit);
+        drawCell(vx, vy, ch, c, d, x, y, wide, op, lit, e ? remember(e, x, y) : null);
         if (wide) covered = true;
       }
     }
 
+    // Bodies that left the map do not keep a remembered position.
+    for (const k of D.POS.keys()) if (!S.ents.includes(k)) D.POS.delete(k);
     const def = WA.GAME.maps[S.id];
     U.el('screen').style.background = (def && def.bg) || '';
     if (WA.weather) WA.weather.apply(S);
