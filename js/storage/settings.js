@@ -91,7 +91,13 @@
     setSound(v) {
       S.sound = !!v;
       write('sound', S.sound ? 'on' : 'off');
-      if (S.sound && WA.sfx) WA.sfx.confirm();
+      if (!WA.sfx) return;
+      // Off fades what is already ringing and drops the place's ambience.
+      WA.sfx.setMuted(!S.sound);
+      if (S.sound) {
+        WA.sfx.confirm();
+        WA.sfx.ambient(WA.game && WA.game.S);
+      }
     },
     setCrt(v) {
       S.crt = !!v;

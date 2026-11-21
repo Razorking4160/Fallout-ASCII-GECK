@@ -292,7 +292,7 @@
       `<button data-sound="${id}" style="width:44px;font-size:11px;padding:4px 1px;` +
       `${(id === 'on') === on ? 'background:#ffb000;color:#15100a;border-color:#ffb000;' : ''}">${label}</button>`;
     return `<div class="prow"><span>SOUND <b>${on ? 'On' : 'Off'}</b><br>` +
-      `<small class="dim">Shots, hits, deaths, pickups and level-ups are synthesised here; no audio files.</small></span>` +
+      `<small class="dim">Shots, hits, deaths, pickups, level-ups and each place's ambience are synthesised here; no audio files.</small></span>` +
       `<span class="acts">${pick('on', 'On')} ${pick('off', 'Off')}</span></div>`;
   }
 

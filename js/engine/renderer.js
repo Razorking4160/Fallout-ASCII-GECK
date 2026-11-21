@@ -277,6 +277,7 @@
     const def = WA.GAME.maps[S.id];
     U.el('screen').style.background = (def && def.bg) || '';
     if (WA.weather) WA.weather.apply(S);
+    if (WA.sfx && WA.sfx.ambient) WA.sfx.ambient(S);
     hud();
     WA.save.queueAutosave();
   }

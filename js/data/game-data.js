@@ -809,7 +809,8 @@
     maps: {
       // amb = ambient light, 0 is pitch dark and 1 is fully lit. Indoor maps
       // ignore the game clock's daylight multiplier; weather is visual only.
-      vault: { name: 'Vault 42 Entrance', amb: 0.22, indoor: true, weather: 'none', rows: [
+      // ambience = which synthesised sound bed plays here (hum, rain, wind, water).
+      vault: { name: 'Vault 42 Entrance', amb: 0.22, indoor: true, weather: 'none', ambience: 'hum', rows: [
         "##############################",
         "#@...#.........#.............#",
         "#....#.....r...#....$....g...#",
@@ -826,7 +827,7 @@
         "#..........................>.#",
         "##############################"
       ], exits: { '27,13': 'outskirts' } },
-      outskirts: { name: 'Wasteland Outskirts', amb: 0.9, indoor: false, weather: 'rain', rows: [
+      outskirts: { name: 'Wasteland Outskirts', amb: 0.9, indoor: false, weather: 'rain', ambience: 'rain', rows: [
         "####################",
         "#..................#",
         "#.>...r.......$...>#",
@@ -836,7 +837,7 @@
         "#.....G...%........#",
         "####################"
       ], exits: { '2,2': 'vault', '18,2': 'ruins' } },
-      ruins: { name: 'Wasteland Ruins', amb: 0.42, indoor: false, weather: 'fog', rows: [
+      ruins: { name: 'Wasteland Ruins', amb: 0.42, indoor: false, weather: 'fog', ambience: 'wind', rows: [
         "########################",
         "#@..*...>..##....##....#",
         "#..........##....##.=$.#",
@@ -855,7 +856,7 @@
       // Route 9 is the long road east: a three-lane bypass with a broken span in
       // the middle. The span blocks carts but not people, so the crossing is a
       // repair job rather than a wall.
-      bypass: { name: 'Route 9 Bypass', amb: 0.6, indoor: false, weather: 'rain', rows: [
+      bypass: { name: 'Route 9 Bypass', amb: 0.6, indoor: false, weather: 'rain', ambience: 'rain', rows: [
         "##########################",
         "#.........=..............#",
         "#..▬d...c♨q.......!......#",
@@ -872,7 +873,7 @@
       ], exits: { '1,4': 'ruins', '24,4': 'pumphouse' } },
       // The market's water works: dark, wet, and guarded by whatever crawled in
       // when the pumps stopped.
-      pumphouse: { name: 'Flooded Pumphouse', amb: 0.14, indoor: true, weather: 'none', rows: [
+      pumphouse: { name: 'Flooded Pumphouse', amb: 0.14, indoor: true, weather: 'none', ambience: 'water', rows: [
         "####################",
         "#...............=..#",
         "#..~~..............#",

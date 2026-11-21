@@ -32,6 +32,7 @@
     }
     return {
       name: o.name, bg: o.bg, amb: o.amb, indoor: !!o.indoor, weather: o.weather || 'none',
+      ambience: o.ambience || '',
       exits: o.exits || {}, start: o.start,
       w: o.t[0].length, h: o.t.length,
       rows: o.t.map(r => r.map(id => rev[id]).join('')),
@@ -55,7 +56,8 @@
         else t[y][x] = id && WA.GAME.tiles[id] ? id : 'wall';
       }
     });
-    return packMap({ name: m.name, bg: m.bg, amb: m.amb, indoor: !!m.indoor, weather: m.weather || 'none', exits: m.exits, start, t, things });
+    return packMap({ name: m.name, bg: m.bg, amb: m.amb, indoor: !!m.indoor,
+      weather: m.weather || 'none', ambience: m.ambience, exits: m.exits, start, t, things });
   }
 
   /* ---------- live state ---------- */

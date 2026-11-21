@@ -114,6 +114,7 @@
 /* 0.66.0: shared world-turn skip and pace setting synced from the game. */
 /* 0.67.0: shared combat feedback overlay synced from the game. */
 /* 0.68.0: shared synthesised sound effects and Sound setting synced from the game. */
+/* 0.69.0: shared ambient loops and place ambience synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
