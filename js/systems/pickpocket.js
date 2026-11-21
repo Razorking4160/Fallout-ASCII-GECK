@@ -90,7 +90,7 @@
   function render() {
     const el = U.el('pick');
     if (!el || el.hidden) return;
-    U.setHtml('pick', html());
+    U.setHtmlScroll('pick', html());
   }
 
   function open(id) {

@@ -5,6 +5,11 @@
   const $ = U.el;
 
   function show(t) {
+    // The boot menu and every panel lock page scrolling with a class on the
+    // body, and they live inside the play pane. Hiding that pane leaves them
+    // unreachable but still locking the studio, so clear them on a tab switch.
+    if (WA.menu && WA.menu.isOpen()) WA.menu.close();
+    if (t !== 'play' && WA.ui) { WA.ui.closeAll(); WA.ui.backdrop(); }
     document.body.classList.toggle('editing', t === 'edit');
     document.body.classList.toggle('forging', t === 'forge');
     document.body.classList.toggle('benching', t === 'bench');

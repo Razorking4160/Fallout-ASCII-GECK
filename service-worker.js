@@ -125,6 +125,7 @@
 /* 0.75.1: every game panel, the backdrop and the menu open inside the play pane. */
 /* 0.76.0: the play pane shows melee swings and dismemberment, the new ground tiles, the vault-door menu and the walk/run pace. */
 /* 0.77.0: shared ASCII talking heads in the play pane, and Shift + a direction runs there too. */
+/* 0.77.1: a tab switch clears the menu and panel scroll lock, and the shared panels keep their scroll position. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

@@ -803,7 +803,7 @@
   function render() {
     const el = U.el('trade');
     if (!el || el.hidden) return;
-    U.setHtml('trade', html());
+    U.setHtmlScroll('trade', html());
   }
 
   function open(id) {

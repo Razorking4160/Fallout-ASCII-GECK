@@ -371,7 +371,14 @@
       `<button data-tab="${id}" class="${TAB === id ? 'sel' : ''}">${name}</button>`).join('')}` +
       `<span class="pausetag">PAUSED</span>` +
       `<button class="pipclose" data-close="pip" aria-label="Close Pip-Boy">×</button></div>`;
+    // Spending a point or using an item redraws the tab in place. Keep the
+    // reader's place, but start a different tab at its top.
+    const prevBody = p.querySelector('.pipbody');
+    const prevTab = p.querySelector('.piptabs .sel');
+    const keep = prevBody && prevTab && prevTab.dataset.tab === TAB ? prevBody.scrollTop : 0;
     U.setHtml('pip', tabs + `<div class="pipbody">${body}</div>`);
+    const nextBody = p.querySelector('.pipbody');
+    if (nextBody && keep) nextBody.scrollTop = keep;
   }
 
   function travelTo(id) {

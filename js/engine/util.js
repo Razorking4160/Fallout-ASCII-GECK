@@ -30,6 +30,15 @@
 
   U.el = id => document.getElementById(id);
   U.setHtml = (id, h) => { const el = U.el(id); if (el && el._h !== h) { el._h = h; el.innerHTML = h; } };
+  /* Same, but the reader keeps their place. Panels redraw after every action,
+     and a fresh innerHTML would otherwise jump back to the top. */
+  U.setHtmlScroll = (id, h) => {
+    const el = U.el(id);
+    if (!el) return;
+    const top = el.scrollTop;
+    U.setHtml(id, h);
+    if (top && el.scrollTop !== top) el.scrollTop = top;
+  };
   U.setText = (id, t) => { const el = U.el(id); if (el && el.textContent !== t) el.textContent = t; };
 
   /* ---- display width ---------------------------------------------------

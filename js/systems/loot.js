@@ -78,7 +78,7 @@
       (wait ? `<div class="dlgcheck">Steady your hands: ${wait} turn${wait === 1 ? '' : 's'} before another try.</div>` : '') +
       (MSG ? `<div class="dlgcheck">${U.esc(MSG)}</div>` : '');
     if (PENDING) {
-      U.setHtml('loot', head +
+      U.setHtmlScroll('loot', head +
         `<div class="dim" style="font-size:13px;margin:4px 0">This container is trapped. Opening it will trigger the trap.</div>` +
         `<div class="use"><button data-lo="1">Open container</button>` +
         `<button data-lx="1">Close</button></div>`);
@@ -94,7 +94,7 @@
           `<button data-li="${i}" style="width:64px;font-size:13px" ${lifted ? 'disabled' : ''}>Take</button></span></div>`;
       }).join('')
       : '<div class="dim">Empty.</div>';
-    U.setHtml('loot', head + rows +
+    U.setHtmlScroll('loot', head + rows +
       `<div class="use"><button data-la="1" ${st.it.length && !lifted ? '' : 'disabled'}>Take all</button>` +
       `<button data-lx="1">Close</button></div>`);
   }
