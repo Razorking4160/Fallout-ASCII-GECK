@@ -5,8 +5,11 @@
 #appswitch a{color:var(--dim);text-decoration:none;border-bottom:1px dotted var(--dim)}
 #appswitch a:hover{color:var(--fg)}
 
-/* The game's panels are fixed to the window, which here is the whole studio:
-   the full-height Pip-Boy would sit over the tabs and the pane's edges. Anchor
-   it to the play pane instead, keeping the shared width and inner scrolling. */
+/* The game's panels and the main menu are fixed to the window, which here is
+   the whole studio, so they open over the tabs and the pane's edges. The play
+   pane is their containing block instead: the same boxes, the same scrolling
+   and the same width, just clipped to the pane they belong to. */
 #play{position:relative}
 #pip{position:absolute;top:8px;bottom:8px;left:50%;height:auto;max-height:none;transform:translateX(-50%)}
+#chargen,#vats,#dlg,#trade,#pick,#loot,#lock,#hack,#gamble,#ending,#death{position:absolute;max-height:calc(100% - 16px)}
+#modalback,#menu{position:absolute;inset:0}

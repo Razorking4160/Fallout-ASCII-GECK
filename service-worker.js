@@ -122,6 +122,7 @@
 /* 0.73.0: shared Pip-Boy portrait and paper doll, and a Sound option in the studio's Options. */
 /* 0.74.0: shared full-height Pip-Boy with labelled sections. */
 /* 0.75.0: the Pip-Boy opens inside the play pane instead of over the whole studio. */
+/* 0.75.1: every game panel, the backdrop and the menu open inside the play pane. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
