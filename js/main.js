@@ -1,20 +1,9 @@
-/* Boot and input. Everything else lives in its own module. */
+/* Game boot and input. The studio is a separate app; this page loads only the
+   play view and the optional content pack it was handed. */
 (function (WA) {
   'use strict';
   const U = WA.util;
   const $ = U.el;
-
-  function show(t) {
-    document.body.classList.toggle('editing', t === 'edit');
-    document.body.classList.toggle('forging', t === 'forge');
-    document.body.classList.toggle('benching', t === 'bench');
-    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('sel', b.dataset.t === t));
-    if (t === 'edit') WA.editor.renderEd();
-    if (t === 'forge') { WA.forge.fillForge(); if (WA.authoring && WA.authoring.browse) WA.authoring.browse(); }
-    if (t === 'bench' && WA.bench) WA.bench.show();
-  }
-  // The registry lives in js/engine/ui.js; the studio adds its tab switch.
-  WA.ui.show = show;
 
   function bindPlay() {
     // The world's turn plays out a beat at a time. Input waits for it, exactly
@@ -79,6 +68,7 @@
       if (!b) return;
       if (b.dataset.tab) WA.pip.setTab(b.dataset.tab);
       else if (b.dataset.diff) { WA.settings.setDifficulty(b.dataset.diff); WA.pip.render(); }
+      else if (b.dataset.speed) { WA.settings.setTurnSpeed(b.dataset.speed); WA.pip.render(); }
       else if (b.dataset.travel) WA.pip.travelTo(b.dataset.travel);
       else if (b.dataset.track) { WA.quests.track(b.dataset.track); WA.pip.render(); }
       else if (b.dataset.eq) WA.inv.equip(b.dataset.eq);
@@ -168,14 +158,16 @@
       e.stopPropagation();
     });
 
-    document.querySelectorAll('#tabs button').forEach(b => { b.onclick = () => show(b.dataset.t); });
-
     const KEYS = { ArrowUp: [0, -1], w: [0, -1], ArrowDown: [0, 1], s: [0, 1], ArrowLeft: [-1, 0], a: [-1, 0], ArrowRight: [1, 0], d: [1, 0] };
     addEventListener('keydown', ev => {
       if (/editing|forging|benching/.test(document.body.className)) return;
       if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
       if (!WA.game.S) return;
-      if (busy()) return;
+      // The world's turn can take seconds; one press finishes the rest of it.
+      if (busy()) {
+        if (ev.key === '.') { ev.preventDefault(); WA.turn.skip(); }
+        return;
+      }
       if (WA.ui.isOpen('chargen')) return;
       if (WA.ui.isOpen('ending')) {
         if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('ending'); }
@@ -302,25 +294,41 @@
   async function boot() {
     offline();
     WA.settings.init();
-    // Definitions shipped in js/data/defs-authored.js sit under the browser's
-    // Forge overrides, so a studio edit still wins.
-    if (WA.baked) WA.baked.apply(WA.AUTHORED_DEFS);
-    // Pack the hand-written text maps once, before the editor or the preview reads them.
+    // Baked definitions, then hand-written jobs and dialogue, then the optional
+    // content pack exported by the studio. A pack never replaces shipped quests.
+    if (WA.baked) {
+      WA.baked.apply(WA.AUTHORED_DEFS);
+      WA.baked.applyMaps(WA.AUTHORED);
+    }
+    // Pack the hand-written text maps once, before any system reads them.
     if (WA.maps && WA.maps.normalize) WA.maps.normalize();
-    WA.forge.init();
-    // Authored quests and dialogue merge after Forge overrides load, so a saved
-    // entity edit cannot hide a hand-written quest branch. The authoring store
-    // is read first: it adds the jobs saved in this browser and takes pristine
-    // tree snapshots before the merge changes anything.
-    if (WA.authoring) WA.authoring.init();
     WA.authored.apply();
+
+    if (WA.pack) {
+      const src = new URLSearchParams(location.search).get('pack');
+      if (src) {
+        const r = await WA.pack.importUrl(src);
+        if (r.ok) {
+          // Drop the parameter so a reload does not import the same file again.
+          const clean = new URL(location.href);
+          clean.searchParams.delete('pack');
+          location.replace(clean.toString());
+          return;
+        }
+        WA.pack.bootError = r.errors.join(' ');
+      }
+      try {
+        const stored = await WA.pack.load();
+        if (stored && stored.ok) WA.pack.bootError = '';
+        else if (stored && stored.errors && stored.errors.length) {
+          WA.pack.bootError = 'Stored pack rejected: ' + stored.errors.slice(0, 2).join(' ');
+        }
+      } catch (e) { WA.pack.bootError = 'The stored content pack could not be loaded.'; }
+    }
+
     WA.authored.log();
-    WA.bench.init();
-    if (WA.packUI) WA.packUI.init();
-    await WA.editor.init();
     WA.vats.bind();
     bindPlay();
-    show('play');
 
     const opening = WA.save.init();
     // Keep a neutral game shell behind the boot menu. New Game replaces this

@@ -91,7 +91,7 @@
       el.animate([
         { transform: `translate(${step.dx}em, ${step.dy}em)` },
         { transform: 'translate(0, 0)' }
-      ], { duration: 160, easing: 'ease-out' });
+      ], { duration: WA.settings.turnSlide ? WA.settings.turnSlide() : 160, easing: 'ease-out' });
     } catch (e) { /* an old engine without the Web Animations API */ }
   }
 

@@ -19,6 +19,22 @@
 
   const diff = () => DIFF_BY[D] || DIFF_BY.normal;
 
+  /* The world's turn is played out one action per beat. How fast that reads is
+     a matter of taste and screen size, so the pace is a device setting: the
+     rules never read it, only the beat and the slide between cells do. */
+  const SPEEDS = [
+    { id: 'slow', name: 'Slow', beat: 480, slide: 260,
+      desc: 'About half a second a step, with a long rest on each tile. Easiest to follow when several enemies move.' },
+    { id: 'normal', name: 'Normal', beat: 300, slide: 160,
+      desc: 'A third of a second a step: each body lands, rests briefly, then the next action starts.' },
+    { id: 'fast', name: 'Fast', beat: 170, slide: 90,
+      desc: 'Under a fifth of a second a step. Quick, but actions still land one at a time rather than all at once.' }
+  ];
+  const SPEED_BY = {};
+  for (const s of SPEEDS) SPEED_BY[s.id] = s;
+  let SP = 'normal';
+  const speed = () => SPEED_BY[SP] || SPEED_BY.normal;
+
   function read(key, fallback) {
     try {
       const v = localStorage.getItem('wasteland.' + key);
@@ -32,11 +48,16 @@
 
   WA.settings = {
     DIFFS,
+    SPEEDS,
     get fog() { return S.fog; },
     get anim() { return S.anim; },
     get crt() { return S.crt; },
     get difficulty() { return D; },
     get difficultyDef() { return diff(); },
+    get turnSpeed() { return SP; },
+    get turnSpeedDef() { return speed(); },
+    turnBeat() { return speed().beat; },
+    turnSlide() { return speed().slide; },
     incomingMul() { return diff().incoming; },
     outgoingMul() { return diff().outgoing; },
     enemyAcc() { return diff().enemyAcc; },
@@ -47,6 +68,8 @@
       S.crt = read('crt', 'on') !== 'off';
       const stored = read('difficulty', 'normal');
       D = DIFF_BY[stored] ? stored : 'normal';
+      const pace = read('turnspeed', 'normal');
+      SP = SPEED_BY[pace] ? pace : 'normal';
       this.applyAnim();
       this.applyCrt();
     },
@@ -55,6 +78,12 @@
       D = id;
       write('difficulty', id);
       if (WA.pip && WA.pip.isOpen()) WA.pip.render();
+      return true;
+    },
+    setTurnSpeed(id) {
+      if (!SPEED_BY[id]) return false;
+      SP = id;
+      write('turnspeed', id);
       return true;
     },
     setCrt(v) {

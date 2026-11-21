@@ -111,6 +111,7 @@
 /* 0.65.3: shared paced companion turns and phase cancellation synced from the game. */
 /* 0.65.4: shared step slide and world-turn lead-in synced from the game. */
 /* 0.65.5: slower shared world-turn beat and step slide synced from the game. */
+/* 0.66.0: shared world-turn skip and pace setting synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

@@ -18,8 +18,12 @@
      between them, so a step reads as a step instead of a jump. The logic is
      still turn-based: the beat only paces presentation, and nothing in the
      rules reads a frame clock. */
-  const BEAT = 300;   // ms between world actions
+  // How fast the world acts is a device setting (Options → World turn); the
+  // rules never read it, only the beat between actions does.
+  const beatMs = () => (WA.settings && WA.settings.turnBeat ? WA.settings.turnBeat() : 300);
   let busy = false, timer = 0, again = false;
+  // The pending beat, so a skip can resolve the rest of the phase on the spot.
+  let resume = null, skipNow = false;
 
   /* Animation off, or a system asked for less motion: run the phase at once. */
   function animate() {
@@ -40,6 +44,8 @@
   function finish(s) {
     timer = 0;
     busy = false;
+    resume = null;
+    skipNow = false;
     // A load can replace the state mid-phase; then only the board is redrawn.
     const live = WA.game.S === s;
     if (live) {
@@ -54,18 +60,41 @@
     if (live && again && !s.dead) { again = false; round(s); }
   }
 
-  /* Both world phases run through the same beat: one action, one redraw. */
+  /* Both world phases run through the same beat: one action, one redraw. A
+     skip (skipNow) instead runs the rest of the phase in this tick and lets
+     finish() paint the board once. */
   function beats(s, src, done) {
     const beat = () => {
       timer = 0;
-      if (WA.game.S !== s || s.dead || s.hp <= 0 || !src.next()) return done();
+      resume = beat;
+      if (WA.game.S !== s || s.dead || s.hp <= 0 || !src.next()) {
+        resume = null;
+        return done();
+      }
+      if (skipNow) return beat();
       WA.game.updateVis();
       WA.view.draw();
-      timer = setTimeout(beat, BEAT);
+      timer = setTimeout(beat, beatMs());
     };
+    resume = beat;
     // The first action waits a beat as well, so the player's own move is painted
     // on its own before the world starts moving around it.
-    timer = setTimeout(beat, BEAT);
+    if (skipNow) return beat();
+    timer = setTimeout(beat, beatMs());
+  }
+
+  /* Finish the rest of the world's turn now: the remaining enemy actions, then
+     the companions, resolve in one tick and the board is painted once. The
+     world's turn is long enough to watch, and sometimes you would rather not. */
+  function skip() {
+    if (!busy || !resume) return false;
+    if (timer) clearTimeout(timer);
+    timer = 0;
+    skipNow = true;
+    const beat = resume;
+    resume = null;
+    beat();
+    return true;
   }
 
   /* Companions take their turn after the enemies, once the player is safe, and
@@ -98,6 +127,8 @@
     timer = 0;
     busy = false;
     again = false;
+    resume = null;
+    skipNow = false;
     if (WA.ai && WA.ai.cancel) WA.ai.cancel();
     if (WA.party && WA.party.cancel) WA.party.cancel();
   }
@@ -263,5 +294,5 @@
     end(true, 0);
   }
 
-  WA.turn = { end, playerMove, wait, paused, cancel, busy: () => busy };
+  WA.turn = { end, playerMove, wait, paused, cancel, skip, busy: () => busy };
 })(window.WA = window.WA || {});

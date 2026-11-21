@@ -274,6 +274,17 @@
       `<small class="dim">${U.esc(def.desc)}</small></span><span class="acts">${buttons}</span></div>`;
   }
 
+  function speedHtml() {
+    if (!WA.settings || !WA.settings.SPEEDS) return '';
+    const def = WA.settings.turnSpeedDef;
+    const buttons = WA.settings.SPEEDS.map(d =>
+      `<button data-speed="${d.id}" style="width:52px;font-size:11px;padding:4px 1px;` +
+      `${d.id === def.id ? 'background:#ffb000;color:#15100a;border-color:#ffb000;' : ''}">${d.name}</button>`).join(' ');
+    return `<div class="prow"><span>WORLD TURN <b>${U.esc(def.name)}</b><br>` +
+      `<small class="dim">${U.esc(def.desc)} Press . to finish a world turn at once.</small></span>` +
+      `<span class="acts">${buttons}</span></div>`;
+  }
+
   function dataHtml() {
     const s = S();
     const bounty = s && (s.bounty | 0) > 0
@@ -285,7 +296,7 @@
         `${typeof s.ending.karma === 'number' && WA.reputation ? ' · ' + WA.reputation.karmaTier(s.ending.karma).name : ''}</small></span>` +
         `<button data-end="open" style="width:64px;font-size:13px">Read</button></div>`
       : '';
-    return difficultyHtml() + bounty + WA.save.panelHtml() + ending;
+    return difficultyHtml() + speedHtml() + bounty + WA.save.panelHtml() + ending;
   }
 
   function render() {
