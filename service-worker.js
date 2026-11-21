@@ -106,6 +106,7 @@
 /* 0.64.13: the shared 3x3 action pad, VATS target marking and AP-length turns, synced from the game. */
 /* 0.64.14: shared enemy AP pools and Pip-Boy item AP costs, synced from the game. */
 /* 0.65.0: release cut for the shared AP turns, enemy AP pools and Pip-Boy item AP costs. */
+/* 0.65.1: shared gunner repositioning synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

@@ -9,10 +9,35 @@
      4. Sequence is the existing lever: a rat (2) gets 3 AP, an average raider
      (6) gets 5, and the quickest (10+) reaches the cap of 8. */
   const STEP = 1, ATTACK = 4, AP_MIN = 3, AP_MAX = 8;
+  /* A gunner would rather shoot from two tiles than swing at one, so it treats
+     that as the nearest distance worth holding. */
+  const KEEP_AWAY = 2;
 
   function maxAp(e) {
     const seq = WA.combat ? WA.combat.enemySequence(e) : 4;
     return Math.max(AP_MIN, Math.min(AP_MAX, Math.round(seq / 2) + 2));
+  }
+
+  function stepTo(e, nx, ny) {
+    e.face = U.faceTo(nx - e.x, ny - e.y) || e.face;
+    WA.game.moveEntity(e, nx, ny);
+  }
+
+  /* Free neighbouring tiles that still hold a firing line on the target,
+     roomiest first. Empty when every step would be out of its own range or
+     shooting into a wall. */
+  function firingSpots(e, tx, ty) {
+    const reach = (e.d && e.d.range) || 5;
+    const spots = [];
+    for (const [dx, dy] of WA.path.DIRS) {
+      const nx = e.x + dx, ny = e.y + dy;
+      if (!WA.game.free(nx, ny)) continue;
+      const d = U.cheb(nx, ny, tx, ty);
+      if (d < KEEP_AWAY || d > reach) continue;
+      if (!WA.vis.los(nx, ny, tx, ty)) continue;
+      spots.push({ x: nx, y: ny, d });
+    }
+    return spots.sort((a, b) => b.d - a.d);
   }
 
   function stepToward(e, tx, ty) {
@@ -91,6 +116,18 @@
     // buys movement, never a second hit before the player acts again.
     const canHit = !e.attacked && (e.ap | 0) >= ATTACK;
 
+    // A gunner with the AP for a step and a shot backs out of arm's reach to
+    // the roomiest firing line it can find, then fires from there on the next
+    // pass of the pool. Too spent to do both, or cornered, it swings instead.
+    if (ai === 'ranged' && dist === 1 && (e.ap | 0) >= STEP + ATTACK) {
+      const spot = firingSpots(e, tgt.x, tgt.y)[0];
+      if (spot) {
+        stepTo(e, spot.x, spot.y);
+        e.ap = Math.max(0, (e.ap | 0) - STEP);
+        return true;
+      }
+    }
+
     if (dist === 1) {
       if (!canHit) return false;
       e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
@@ -109,6 +146,17 @@
     if (sees) {
       e.last = [tgt.x, tgt.y];
       if (!tgt.ally && s.sneak && WA.field) WA.field.spotted(e);
+    }
+
+    // Losing the line is not blindness: a gunner shifts to a tile that can
+    // see the target before it advances on the sound of it.
+    if (ai === 'ranged' && !inSight && dist <= (d.sight || 6) && (e.ap | 0) >= STEP) {
+      const spot = firingSpots(e, tgt.x, tgt.y)[0];
+      if (spot) {
+        stepTo(e, spot.x, spot.y);
+        e.ap = Math.max(0, (e.ap | 0) - STEP);
+        return true;
+      }
     }
 
     if (ai === 'turret') {
@@ -134,8 +182,12 @@
 
     if ((e.ap | 0) < STEP) return false;
     let moved = false;
-    if (sees) moved = stepToward(e, tgt.x, tgt.y);
-    else if (e.last && ai !== 'wander') {
+    if (sees) {
+      // A gunner that has already fired holds that ground; leftover AP must
+      // not walk it back into the reach it just left.
+      if (ai === 'ranged' && e.attacked) return false;
+      moved = stepToward(e, tgt.x, tgt.y);
+    } else if (e.last && ai !== 'wander') {
       moved = stepToward(e, e.last[0], e.last[1]);
       if (e.x === e.last[0] && e.y === e.last[1]) e.last = null;
     } else if (ai === 'wander' && Math.random() < 0.5) moved = wander(e);
