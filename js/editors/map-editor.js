@@ -58,6 +58,7 @@
   const idColor = id => (colorOf(id)[0] === '#' ? colorOf(id) : cssColor(cn(id)));
 
   const store = id => (WA.mapStore ? WA.mapStore.put(id, SAVED[id]) : Promise.resolve(false));
+  const bedOf = m => (m && typeof m.ambience === 'string' ? m.ambience : '');
 
   /* ---------- model <-> stored map ---------- */
   function toMap() {
@@ -94,8 +95,7 @@
 
     ED = {
       id, name: m.name || id, bg: m.bg, amb: typeof m.amb === 'number' ? m.amb : 1,
-      indoor: !!m.indoor, weather: m.weather || 'none',
-      ambience: typeof m.ambience === 'string' ? m.ambience : '',
+      indoor: !!m.indoor, weather: m.weather || 'none', ambience: bedOf(m),
       exits: { ...(m.exits || {}) }, s: start, o: {}, n: {}, t
     };
     for (const [tid, x, y] of m.things || []) {
@@ -124,7 +124,7 @@
      have keeps its value instead of losing it on the next save. */
   const BED_NAME = { hum: 'Vault hum', rain: 'Rain', wind: 'Wind', water: 'Water' };
   function bedOptions(current) {
-    const kinds = (WA.sfx && WA.sfx.kinds ? WA.sfx.kinds : Object.keys(BED_NAME)).slice();
+    const kinds = (((WA.sfx && WA.sfx.kinds) || Object.keys(BED_NAME))).slice();
     if (current && kinds.indexOf(current) < 0) kinds.push(current);
     return '<option value="">Auto (indoor / weather)</option>' + kinds
       .map(k => `<option value="${U.esc(k)}">${U.esc(BED_NAME[k] || k)}</option>`).join('');
@@ -702,7 +702,7 @@
       amb: typeof m.amb === 'number' ? m.amb : 1,
       indoor: !!m.indoor,
       weather: m.weather === 'rain' || m.weather === 'fog' ? m.weather : 'none',
-      ambience: typeof m.ambience === 'string' ? m.ambience.slice(0, 20) : '',
+      ambience: bedOf(m).slice(0, 20),
       w, h, rows: m.rows.map(r => String(r)), legend, exits, things, start
     };
   }

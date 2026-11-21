@@ -38,20 +38,36 @@
         ctx = new AC();
         master = ctx.createGain();
         master.gain.value = MASTER;
-        // Six voices plus a bed can peak past full scale at this level; a
-        // limiter keeps the louder mix from cracking instead of clipping it.
-        const limit = ctx.createDynamicsCompressor();
-        limit.threshold.value = -8;
-        limit.knee.value = 6;
-        limit.ratio.value = 12;
-        limit.attack.value = 0.004;
-        limit.release.value = 0.15;
-        master.connect(limit);
-        limit.connect(ctx.destination);
+        master.connect(output(ctx));
       } catch (e) { ctx = null; return null; }
     }
     if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
     return ctx;
+  }
+
+  /* Six voices plus a bed can peak past full scale at this level, so the mix
+     goes through a limiter where the browser has one and straight out where it
+     does not, rather than losing all sound to a missing node. */
+  function output(c) {
+    if (!c.createDynamicsCompressor) return c.destination;
+    const lim = c.createDynamicsCompressor();
+    lim.threshold.value = -8;
+    lim.knee.value = 6;
+    lim.ratio.value = 12;
+    lim.attack.value = 0.004;
+    lim.release.value = 0.15;
+    lim.connect(c.destination);
+    return lim;
+  }
+
+  /* Move one gain from wherever its automation left it. Mute, the tab hush and
+     the duck are all the same ramp with a different target. */
+  function ramp(param, to, at, seconds) {
+    try {
+      param.cancelScheduledValues(at);
+      param.setValueAtTime(Math.max(0.0001, param.value), at);
+      param.linearRampToValueAtTime(to, at + seconds);
+    } catch (e) { try { param.value = to; } catch (e2) {} }
   }
 
   function unlock() {
@@ -313,12 +329,8 @@
   function duck(c) {
     if (!ambGain || document.hidden) return;
     const t = c.currentTime, g = ambGain.gain;
-    try {
-      g.cancelScheduledValues(t);
-      g.setValueAtTime(Math.max(0.0001, g.value), t);
-      g.linearRampToValueAtTime(AMB_LEVEL * DUCK, t + 0.05);
-      g.linearRampToValueAtTime(AMB_LEVEL, t + 0.7);
-    } catch (e) {}
+    ramp(g, AMB_LEVEL * DUCK, t, 0.05);
+    try { g.linearRampToValueAtTime(AMB_LEVEL, t + 0.7); } catch (e) {}
   }
 
   /* Called by the renderer with the state it is drawing. The same kind returns
@@ -341,24 +353,12 @@
   /* Sound off must silence what is already ringing, not just stop new sounds. */
   function setMuted(muted) {
     if (muted && ambGain) stopAmbient();
-    if (!master || !ctx) return;
-    const t = ctx.currentTime, g = master.gain;
-    try {
-      g.cancelScheduledValues(t);
-      g.setValueAtTime(Math.max(0.0001, g.value), t);
-      g.linearRampToValueAtTime(muted ? 0.0001 : MASTER, t + 0.12);
-    } catch (e) { g.value = muted ? 0.0001 : MASTER; }
+    if (master && ctx) ramp(master.gain, muted ? 0.0001 : MASTER, ctx.currentTime, 0.12);
   }
 
   // Coming back to the tab brings the place back up; leaving it hushes it.
   document.addEventListener('visibilitychange', () => {
-    if (!ambGain || !ctx) return;
-    const t = ctx.currentTime, g = ambGain.gain;
-    try {
-      g.cancelScheduledValues(t);
-      g.setValueAtTime(Math.max(0.0001, g.value), t);
-      g.linearRampToValueAtTime(document.hidden ? 0.0001 : AMB_LEVEL, t + 0.3);
-    } catch (e) {}
+    if (ambGain && ctx) ramp(ambGain.gain, document.hidden ? 0.0001 : AMB_LEVEL, ctx.currentTime, 0.3);
   });
 
   WA.sfx = {

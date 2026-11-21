@@ -116,6 +116,7 @@
 /* 0.68.0: shared synthesised sound effects and Sound setting synced from the game. */
 /* 0.69.0: shared ambient loops and place ambience synced from the game. */
 /* 0.70.0: shared table-driven ambience with gunfire ducking and a louder mix; maps keep their sound bed. */
+/* 0.70.1: shared one-ramp helper and limiter fallback; the sync check now guards the studio's editor boot. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
