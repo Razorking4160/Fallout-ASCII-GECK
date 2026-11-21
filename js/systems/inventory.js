@@ -361,6 +361,7 @@
       if (equipped) s[d.type] = it;
       WA.game.say(`You find the ${d.name}` + (equipped ? ' and equip it.' : '. Tap the top bar to equip.'));
     } else WA.game.say(`You pick up the ${d.name}.`);
+    if (WA.sfx) WA.sfx.pickup();
     return true;
   }
 

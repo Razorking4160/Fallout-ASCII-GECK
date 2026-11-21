@@ -42,6 +42,7 @@
       const every = WA.traits ? WA.traits.perkEvery() : 3;
       if (s.lvl % every === 0) s.perkPending = (s.perkPending | 0) + 1;
       s.hp = Math.min(maxHp(), s.hp + 5 + maxHp() - oldMax);
+      if (WA.sfx) WA.sfx.levelUp();
       WA.game.say(`LEVEL UP! You are now level ${s.lvl}. +${s.skillPoints - beforePts} skill points.` +
         (s.lvl % every === 0 ? ' A perk is waiting in the Pip-Boy.' : '') +
         (s.lvl >= WA.scale.CAP ? ' Maximum level reached.' : ' Tap the top bar to spend a point.'));

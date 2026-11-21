@@ -285,6 +285,17 @@
       `<span class="acts">${buttons}</span></div>`;
   }
 
+  function soundHtml() {
+    if (!WA.settings) return '';
+    const on = WA.settings.sound;
+    const pick = (id, label) =>
+      `<button data-sound="${id}" style="width:44px;font-size:11px;padding:4px 1px;` +
+      `${(id === 'on') === on ? 'background:#ffb000;color:#15100a;border-color:#ffb000;' : ''}">${label}</button>`;
+    return `<div class="prow"><span>SOUND <b>${on ? 'On' : 'Off'}</b><br>` +
+      `<small class="dim">Shots, hits, deaths, pickups and level-ups are synthesised here; no audio files.</small></span>` +
+      `<span class="acts">${pick('on', 'On')} ${pick('off', 'Off')}</span></div>`;
+  }
+
   function dataHtml() {
     const s = S();
     const bounty = s && (s.bounty | 0) > 0
@@ -296,7 +307,7 @@
         `${typeof s.ending.karma === 'number' && WA.reputation ? ' · ' + WA.reputation.karmaTier(s.ending.karma).name : ''}</small></span>` +
         `<button data-end="open" style="width:64px;font-size:13px">Read</button></div>`
       : '';
-    return difficultyHtml() + speedHtml() + bounty + WA.save.panelHtml() + ending;
+    return difficultyHtml() + speedHtml() + soundHtml() + bounty + WA.save.panelHtml() + ending;
   }
 
   function render() {

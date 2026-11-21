@@ -1,7 +1,7 @@
 /* Small settings that belong in localStorage. Saves and maps do not live here. */
 (function (WA) {
   'use strict';
-  const S = { fog: true, anim: true, crt: true };
+  const S = { fog: true, anim: true, crt: true, sound: true };
 
   /* Difficulty is a device setting, not part of a save. Each preset feeds the
      systems directly, so changing it applies to the next hit or find. */
@@ -52,6 +52,7 @@
     get fog() { return S.fog; },
     get anim() { return S.anim; },
     get crt() { return S.crt; },
+    get sound() { return S.sound; },
     get difficulty() { return D; },
     get difficultyDef() { return diff(); },
     get turnSpeed() { return SP; },
@@ -66,6 +67,7 @@
       S.fog = read('fog', 'on') !== 'off';
       S.anim = read('anim', 'on') !== 'off';
       S.crt = read('crt', 'on') !== 'off';
+      S.sound = read('sound', 'on') !== 'off';
       const stored = read('difficulty', 'normal');
       D = DIFF_BY[stored] ? stored : 'normal';
       const pace = read('turnspeed', 'normal');
@@ -85,6 +87,11 @@
       SP = id;
       write('turnspeed', id);
       return true;
+    },
+    setSound(v) {
+      S.sound = !!v;
+      write('sound', S.sound ? 'on' : 'off');
+      if (S.sound && WA.sfx) WA.sfx.confirm();
     },
     setCrt(v) {
       S.crt = !!v;

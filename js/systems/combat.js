@@ -190,7 +190,10 @@
     if (o.cripple) e.slow = (e.slow || 0) + o.cripple;
     if (o.weak) e.weak = 1;
     // The flash sits on the shooter, so it reads as coming from you.
-    if (WA.fx && (wp.range || 1) > 1) WA.fx.shot(s.px, s.py);
+    if ((wp.range || 1) > 1) {
+      if (WA.fx) WA.fx.shot(s.px, s.py);
+      if (WA.sfx) WA.sfx.shot();
+    }
     const hit = WA.damage.hurtEnemy(e, d, type, ammo);
 
     if (WA.damage.slay(e)) return true;
@@ -306,6 +309,7 @@
   /* Enemy hit on the player. Ranged attacks come from a distance. */
   function enemyHit(e, ranged, ally) {
     const s = S();
+    if (ranged && WA.sfx) WA.sfx.shot();
     if (ally) return allyHit(e, ranged, ally);
     if (WA.traits && WA.traits.jinxed() && Math.random() < 0.05) {
       WA.game.say(`Jinxed! The ${e.d.name} fumbles and misses.`);

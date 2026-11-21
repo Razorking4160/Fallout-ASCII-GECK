@@ -113,6 +113,7 @@
 /* 0.65.5: slower shared world-turn beat and step slide synced from the game. */
 /* 0.66.0: shared world-turn skip and pace setting synced from the game. */
 /* 0.67.0: shared combat feedback overlay synced from the game. */
+/* 0.68.0: shared synthesised sound effects and Sound setting synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
@@ -147,8 +148,10 @@ const APP_FILES = [
   "./js/editors/pack-ui.js",
   "./js/engine/ai.js",
   "./js/engine/lighting.js",
+  "./js/engine/fx.js",
   "./js/engine/pathfinding.js",
   "./js/engine/renderer.js",
+  "./js/engine/sfx.js",
   "./js/engine/turn.js",
   "./js/engine/ui.js",
   "./js/engine/util.js",
