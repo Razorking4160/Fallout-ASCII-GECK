@@ -233,6 +233,9 @@ body.modal-open{overflow:hidden}
 .cgstats{display:flex;flex-direction:column;gap:3px}.cgstat{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--dim);padding-top:3px}.cgstattext{display:flex;flex-wrap:wrap;gap:4px;align-items:baseline;font-size:13px;min-width:0}.cgstattext span{font-size:16px;font-weight:700}.cgstattext small{flex-basis:100%;font-size:11px;color:var(--dim);line-height:1.2}.cgstepper{display:flex;gap:3px;flex:none}.cgstepper button{width:32px;height:30px;font-size:18px;padding:0}
 .cgderived{font-size:12px;color:var(--dim);margin-top:6px}.cgskills{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:4px 0}.cgskill{display:flex;justify-content:space-between;align-items:center;gap:4px;height:auto;min-height:34px;padding:4px 6px;font-size:12px;line-height:1.2;text-align:left;white-space:normal}.cgskill small{color:var(--dim);font-size:11px;flex:none}.cgskill.sel{background:var(--fg);color:var(--bg)}.cgskill.sel small{color:var(--bg)}.cgsummary{font-size:11px;color:var(--dim);line-height:1.35;margin-top:5px;overflow-wrap:anywhere}
 .creating #pad,.ending-open #pad{display:none}
+.pipdoll{display:flex;gap:10px;align-items:center;margin:2px 0 4px}
+.pipbust{margin:0;line-height:1.06;font-size:13px}
+.pipgear{flex:1;min-width:0}
 .piptabs{display:flex;gap:3px;margin-bottom:6px;align-items:center}
 .pausetag{font-size:10px;letter-spacing:.1em;color:var(--dim);flex:none}
 .piptabs button{flex:1;height:32px;font-size:11px;letter-spacing:0;padding:0}

@@ -174,10 +174,11 @@
       `<div class="menu-options">` +
       difficultyRow() +
       speedRow() +
+      optionRow('optSound', 'Sound', WA.settings.sound) +
       optionRow('optAnim', 'Animated effects', WA.settings.anim) +
       optionRow('optCrt', 'CRT scanlines and glow', WA.settings.crt) +
       optionRow('optFog', 'Fog of war', WA.settings.fog) +
-      `</div><div class="menu-foot">Changes apply immediately and are remembered on this device. Difficulty affects new damage, hit rolls, finds and shop restock. World turn sets how fast the enemies and companions act; during play, press . to finish the world's turn at once.</div></div>`);
+      `</div><div class="menu-foot">Changes apply immediately and are remembered on this device. Difficulty affects new damage, hit rolls, finds and shop restock. World turn sets how fast the enemies and companions act; during play, press . to finish the world's turn at once. Sound effects, each place's ambience and the music are synthesised on this device, so nothing is downloaded.</div></div>`);
   }
 
   async function loadPackFile(file) {
@@ -263,7 +264,8 @@
     });
     box.addEventListener('change', e => {
       if (!WA.settings) return;
-      if (e.target.id === 'optAnim') WA.settings.setAnim(e.target.checked);
+      if (e.target.id === 'optSound') WA.settings.setSound(e.target.checked);
+      else if (e.target.id === 'optAnim') WA.settings.setAnim(e.target.checked);
       else if (e.target.id === 'optCrt') WA.settings.setCrt(e.target.checked);
       else       if (e.target.id === 'optFog') WA.settings.setFog(e.target.checked);
       if (e.target.id === 'packfile' && e.target.files && e.target.files[0]) loadPackFile(e.target.files[0]);

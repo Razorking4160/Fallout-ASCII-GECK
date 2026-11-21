@@ -119,6 +119,7 @@
 /* 0.70.1: shared one-ramp helper and limiter fallback; the sync check now guards the studio's editor boot. */
 /* 0.71.0: shared title theme on the boot menu, plus the menu's ambience hush. */
 /* 0.72.0: shared in-play music track synced from the game. */
+/* 0.73.0: shared Pip-Boy portrait and paper doll, and a Sound option in the studio's Options. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

@@ -15,6 +15,36 @@
     if (a && a.id === 'gio') a.blur();
   }
 
+  /* ---------- portrait ---------- */
+  /* A small ASCII bust beside the gear, which together read as the paper doll:
+     what is worn, what is held and how each limb is doing. Plain characters,
+     centred once, so it lines up in the Pip-Boy's monospace everywhere. */
+  const BUST = [
+    ' ,---. ',
+    '/ o o \\',
+    '|  -  |',
+    ' \\___/ ',
+    '  | |  ',
+    ' /   \\ '
+  ].join('\n');
+
+  function portraitHtml(s) {
+    const armor = s.armor && WA.GAME.items[s.armor];
+    const weapon = s.weapon && WA.GAME.items[s.weapon];
+    // Wear is only shown for gear the game actually tracks condition on.
+    const wear = id => (s.cond && typeof s.cond[id] === 'number' ? ' · ' + s.cond[id] + '%' : '');
+    const slot = (label, item, note) =>
+      `<div class="prow"><span>${label} <b>${item ? U.esc(item.name) : '—'}</b> ` +
+      `<small class="dim">${note}</small></span></div>`;
+    return `<div class="pipdoll">` +
+      `<pre class="pipbust dim" aria-hidden="true">${BUST}</pre>` +
+      `<div class="pipgear">` +
+      slot('ARMOR', armor, armor ? (armor.def ? `DR ${armor.def}` : '') + wear(s.armor) : 'vault suit') +
+      slot('WEAPON', weapon, weapon ? wear(s.weapon) : 'unarmed') +
+      (WA.limbs ? WA.limbs.html(s) : '') +
+      `</div></div>`;
+  }
+
   /* ---------- screens ---------- */
   function statHtml() {
     const s = S();
@@ -31,11 +61,11 @@
     const capped = s.lvl >= WA.scale.CAP;
     const dep = WA.addiction.html();
     return `<div class="prow"><span>${U.esc(s.name || 'Vault Dweller')} <small class="dim">${s.gender || 'male'} · age ${s.age || 25}</small></span></div>` +
+      portraitHtml(s) +
       `<div class="prow"><span>Level <b>${s.lvl}</b><small class="dim">/${WA.scale.CAP}</small> · XP ${capped ? 'MAX' : s.xp + '/' + WA.char.need()}</span>` +
         `<span>Points <b>${s.pts}</b></span></div>` +
       `<div class="prow"><span>HP ${s.hp}/${WA.char.maxHp()} · AP ${s.ap}/${WA.char.maxAp()}</span></div>` +
       shaken +
-      (WA.limbs ? WA.limbs.html(s) : '') +
       `<div class="prow"><span>AC <b>${WA.weapons.playerAc()}</b> · Sequence <b>${WA.combat.sequence()}</b></span>` +
       `<small class="dim">armour + Agility</small></div>` +
       `<div class="prow"><span>Skill points <b>${s.skillPoints | 0}</b> · Perks <b>${s.perkPending | 0}</b></span>` +
@@ -292,7 +322,7 @@
       `<button data-sound="${id}" style="width:44px;font-size:11px;padding:4px 1px;` +
       `${(id === 'on') === on ? 'background:#ffb000;color:#15100a;border-color:#ffb000;' : ''}">${label}</button>`;
     return `<div class="prow"><span>SOUND <b>${on ? 'On' : 'Off'}</b><br>` +
-      `<small class="dim">Shots, hits, deaths, pickups, level-ups, each place's ambience and the title theme are synthesised here; no audio files.</small></span>` +
+      `<small class="dim">Shots, hits, deaths, pickups, level-ups, each place's ambience and the music in play are synthesised here; no audio files.</small></span>` +
       `<span class="acts">${pick('on', 'On')} ${pick('off', 'Off')}</span></div>`;
   }
 
