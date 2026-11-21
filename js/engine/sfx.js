@@ -70,6 +70,13 @@
     } catch (e) { try { param.value = to; } catch (e2) {} }
   }
 
+  /* The shared mix, for anything that plays under the same Sound switch: the
+     title theme hangs its own gain off this master. */
+  function bus() {
+    const c = audio();
+    return c ? { c, master } : null;
+  }
+
   function unlock() {
     if (armed) return;
     armed = true;
@@ -362,7 +369,7 @@
   });
 
   WA.sfx = {
-    shot, hit, death, pickup, levelUp, confirm, unlock, on, ambient, setMuted,
+    shot, hit, death, pickup, levelUp, confirm, unlock, on, ambient, setMuted, bus,
     kinds: KINDS
   };
   unlock();

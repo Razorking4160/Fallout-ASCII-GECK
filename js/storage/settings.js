@@ -98,6 +98,8 @@
         WA.sfx.confirm();
         WA.sfx.ambient(WA.game && WA.game.S);
       }
+      // The title theme follows Sound the same way, when the menu is up.
+      if (WA.music) WA.music.sync();
     },
     setCrt(v) {
       S.crt = !!v;

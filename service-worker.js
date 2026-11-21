@@ -117,6 +117,7 @@
 /* 0.69.0: shared ambient loops and place ambience synced from the game. */
 /* 0.70.0: shared table-driven ambience with gunfire ducking and a louder mix; maps keep their sound bed. */
 /* 0.70.1: shared one-ramp helper and limiter fallback; the sync check now guards the studio's editor boot. */
+/* 0.71.0: shared title theme on the boot menu, plus the menu's ambience hush. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
@@ -152,6 +153,7 @@ const APP_FILES = [
   "./js/engine/ai.js",
   "./js/engine/lighting.js",
   "./js/engine/fx.js",
+  "./js/engine/music.js",
   "./js/engine/pathfinding.js",
   "./js/engine/renderer.js",
   "./js/engine/sfx.js",

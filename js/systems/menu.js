@@ -282,6 +282,9 @@
     const box = el();
     if (!box) return false;
     OPEN = true;
+    // The title and its menus are quiet; the place comes back when play starts.
+    if (WA.sfx && WA.sfx.ambient) WA.sfx.ambient(null);
+    if (WA.music) WA.music.sync();
     box.hidden = false;
     document.body.classList.add('menu-open');
     bind();
@@ -296,6 +299,7 @@
     const box = el();
     if (box) box.hidden = true;
     document.body.classList.remove('menu-open');
+    if (WA.music) WA.music.sync();
   }
 
   WA.menu = { open, close, showMenu, isOpen: () => OPEN };
