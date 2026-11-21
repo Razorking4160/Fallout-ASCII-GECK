@@ -278,6 +278,7 @@
     U.el('screen').style.background = (def && def.bg) || '';
     if (WA.weather) WA.weather.apply(S);
     if (WA.sfx && WA.sfx.ambient) WA.sfx.ambient(S);
+    if (WA.music) WA.music.sync();
     hud();
     WA.save.queueAutosave();
   }

@@ -1,35 +1,52 @@
-/* Music: the title theme, built from oscillators like every other sound here.
-   There is no audio file, so the offline cache gains nothing and a file:// copy
-   plays it too. It is a slow D-minor motif over a drone and a soft chord pad,
-   and it belongs to the boot title: it stops the moment play starts, so a
-   place's ambience is never competing with it.
+/* Music: two slow pieces built from oscillators, one for the boot title and one
+   for the wasteland. There are no audio files, so the offline cache gains
+   nothing and a file:// copy plays them too.
+
+   The title is a modal D-minor motif over a drone and a chord pad. The play
+   piece is slower and sparser, and it is mixed well under the effects and the
+   place beds: it colours a session without ever asking to be listened to.
 
    One whole loop is scheduled at a time and a timer only tops the schedule up,
-   so the piece runs on the audio clock rather than on page timers. */
+   so both pieces run on the audio clock rather than on page timers. */
 (function (WA) {
   'use strict';
-  const BEAT = 60 / 54;          // a slow walk
-  const BAR = BEAT * 4;
-  const LOOP = BAR * 8;
-  const LEVEL = 0.7;             // the piece's own bus, under the shared master
 
-  /* The pad's root per bar, as MIDI notes: Dm Dm Bb F Dm Bb C Am. */
-  const PAD = [50, 50, 46, 53, 50, 46, 48, 45];
-  /* Melody as [beat from the top of the loop, note, length in beats]. Every
-     note is in D natural minor, so the eight bars repeat without a key change. */
-  const MELODY = [
-    [0, 74, 2], [2, 72, 1], [3, 69, 1],
-    [4, 65, 2], [6, 69, 2],
-    [8, 70, 1.5], [9.5, 69, 1], [10.5, 67, 1.5],
-    [12, 65, 2], [14, 62, 2],
-    [16, 74, 2], [18, 72, 1], [19, 70, 1],
-    [20, 69, 2], [22, 67, 2],
-    [24, 65, 1.5], [25.5, 67, 1], [26.5, 69, 1.5],
-    [28, 74, 3.5]
-  ];
+  /* `pad` is one root per bar, as MIDI notes; `melody` is [beat, note, beats]
+     from the top of the loop. Every note is in D natural minor. */
+  const TRACKS = {
+    // The boot title: eight bars, Dm Dm Bb F Dm Bb C Am.
+    title: {
+      bpm: 54, level: 0.7,
+      drone: [[38, 0.03], [45, 0.016]],
+      pad: [50, 50, 46, 53, 50, 46, 48, 45],
+      melody: [
+        [0, 74, 2], [2, 72, 1], [3, 69, 1],
+        [4, 65, 2], [6, 69, 2],
+        [8, 70, 1.5], [9.5, 69, 1], [10.5, 67, 1.5],
+        [12, 65, 2], [14, 62, 2],
+        [16, 74, 2], [18, 72, 1], [19, 70, 1],
+        [20, 69, 2], [22, 67, 2],
+        [24, 65, 1.5], [25.5, 67, 1], [26.5, 69, 1.5],
+        [28, 74, 3.5]
+      ]
+    },
+    // The wasteland: four long bars, Dm Bb C Am, mostly rests.
+    play: {
+      bpm: 40, level: 0.24,
+      drone: [[38, 0.024], [45, 0.014]],
+      pad: [50, 46, 48, 45],
+      melody: [
+        [0, 74, 3], [4, 69, 2.5], [7, 65, 1.5],
+        [8, 70, 3], [11.5, 67, 2],
+        [12, 69, 2], [14.5, 65, 1.5]
+      ]
+    }
+  };
+
   const hz = n => 440 * Math.pow(2, (n - 69) / 12);
+  const loopOf = t => t.pad.length * 4 * (60 / t.bpm);
 
-  let bus = null, gain = null, timer = null, next = 0, drones = [];
+  let bus = null, gain = null, timer = null, next = 0, drones = [], current = '';
 
   /* One note: a short swell, a long tail, then silence. */
   function voice(c, at, dur, freq, type, level, attack) {
@@ -45,7 +62,7 @@
     osc.stop(at + dur + 0.05);
   }
 
-  /* The low fifth that holds the whole piece together, started once. */
+  /* The low fifth that holds a piece together, started once. */
   function drone(c, midi, level) {
     const osc = c.createOscillator(), g = c.createGain();
     osc.type = 'sine';
@@ -57,40 +74,41 @@
     drones.push(g, osc);
   }
 
-  /* One bar of pad: the root and its fifth under a slow swell. */
-  function pad(c, at, midi) {
-    voice(c, at, BAR * 0.98, hz(midi), 'triangle', 0.022, 0.5);
-    voice(c, at, BAR * 0.98, hz(midi + 7), 'sine', 0.016, 0.5);
-  }
-
-  function schedule(c, start) {
-    for (let i = 0; i < PAD.length; i++) pad(c, start + i * BAR, PAD[i]);
-    for (const [beat, midi, beats] of MELODY) {
-      voice(c, start + beat * BEAT, Math.max(0.2, beats * BEAT * 0.9), hz(midi), 'triangle', 0.11, 0.04);
+  /* One loop: the pads, the drone (started once), then the melody over them. */
+  function schedule(c, start, t) {
+    const beat = 60 / t.bpm, bar = beat * 4;
+    for (let i = 0; i < t.pad.length; i++) {
+      const at = start + i * bar;
+      voice(c, at, bar * 0.98, hz(t.pad[i]), 'triangle', 0.022, 0.5);
+      voice(c, at, bar * 0.98, hz(t.pad[i] + 7), 'sine', 0.016, 0.5);
+    }
+    for (const [b, midi, beats] of t.melody) {
+      voice(c, start + b * beat, Math.max(0.2, beats * beat * 0.9), hz(midi), 'triangle', 0.11, 0.04);
     }
   }
 
   function tick() {
-    if (!bus) return;
-    const c = bus.c;
-    while (next < c.currentTime + LOOP * 0.75) {
-      schedule(c, next);
-      next += LOOP;
+    if (!bus || !current) return;
+    const c = bus.c, t = TRACKS[current], loop = loopOf(t);
+    while (next < c.currentTime + loop * 0.75) {
+      schedule(c, next, t);
+      next += loop;
     }
   }
 
-  function play() {
-    if (timer) return true;
+  function start(name) {
+    const t = TRACKS[name];
     const b = WA.sfx && WA.sfx.bus ? WA.sfx.bus() : null;
-    if (!b) return false;
+    if (!t || !b) return false;
+    if (timer) stop();
     bus = b;
+    current = name;
     const c = b.c;
     gain = c.createGain();
     gain.gain.setValueAtTime(0.0001, c.currentTime);
-    gain.gain.exponentialRampToValueAtTime(LEVEL, c.currentTime + 2.5);
+    gain.gain.exponentialRampToValueAtTime(t.level, c.currentTime + 2.5);
     gain.connect(b.master);
-    drone(c, 38, 0.03);   // D2 under everything
-    drone(c, 45, 0.016);  // A2, the fifth
+    for (const [midi, level] of t.drone) drone(c, midi, level);
     next = c.currentTime + 0.25;
     tick();
     timer = setInterval(tick, 1000);
@@ -103,6 +121,7 @@
     gain = null;
     bus = null;
     drones = [];
+    current = '';
     if (!g || !b) return;
     const t = b.c.currentTime;
     try {
@@ -119,25 +138,38 @@
     if (last) last.onended = () => { try { g.disconnect(); } catch (e) {} };
   }
 
-  /* The theme should play exactly while the boot menu is up, the tab is visible
-     and sound is on. The menu, Sound and tab visibility all call this. */
+  /* Which piece belongs right now: the title over the boot menu, the wasteland
+     one in play, nothing while hidden or muted. */
   function want() {
-    return !document.hidden &&
-      !!(WA.menu && WA.menu.isOpen && WA.menu.isOpen()) &&
-      (!WA.settings || WA.settings.sound !== false);
+    if (document.hidden || (WA.settings && WA.settings.sound === false)) return '';
+    if (WA.menu && WA.menu.isOpen && WA.menu.isOpen()) return 'title';
+    return WA.game && WA.game.S ? 'play' : '';
   }
-  function sync() { if (want()) play(); else stop(); }
 
-  /* Browsers keep audio asleep until a gesture. The first click on the title
-     resumes the context and restarts the piece, because notes scheduled for a
-     clock that was not running are already in the past. */
+  /* Called when the menu, Sound, tab visibility or the map changes: the same
+     piece keeps playing, a different one cross-fades in. */
+  function sync() {
+    const name = want();
+    if (name === current && timer) return;
+    if (timer) stop();
+    if (name) start(name);
+  }
+
+  /* Browsers keep audio asleep until a gesture. The first click resumes the
+     context and restarts the piece, because notes scheduled for a clock that
+     was not running are already in the past. */
   function wake() {
     if (!timer || !bus || !bus.c.resume || bus.c.state !== 'suspended') return;
-    bus.c.resume().then(() => { if (timer) { stop(); play(); } }).catch(() => {});
+    const name = current;
+    bus.c.resume().then(() => { if (timer) { stop(); start(name); } }).catch(() => {});
   }
   document.addEventListener('pointerdown', wake, true);
   document.addEventListener('keydown', wake, true);
   document.addEventListener('visibilitychange', sync);
 
-  WA.music = { play, stop, sync, isPlaying: () => !!timer };
+  WA.music = {
+    play: start, stop, sync,
+    isPlaying: () => !!timer,
+    track: () => current
+  };
 })(window.WA = window.WA || {});
