@@ -4,6 +4,17 @@
   const U = WA.util;
   const S = () => WA.game.S;
 
+  /* Enemies carry an AP pool of their own, the way the player carries 6 +
+     Agility, so a chase is not a one-tile crawl. A step costs 1 and an attack
+     4. Sequence is the existing lever: a rat (2) gets 3 AP, an average raider
+     (6) gets 5, and the quickest (10+) reaches the cap of 8. */
+  const STEP = 1, ATTACK = 4, AP_MIN = 3, AP_MAX = 8;
+
+  function maxAp(e) {
+    const seq = WA.combat ? WA.combat.enemySequence(e) : 4;
+    return Math.max(AP_MIN, Math.min(AP_MAX, Math.round(seq / 2) + 2));
+  }
+
   function stepToward(e, tx, ty) {
     const path = WA.path.find(e.x, e.y, tx, ty, {
       maxNodes: 500,
@@ -61,22 +72,30 @@
     return best;
   }
 
-  /* One enemy action. Shared by the normal enemy phase and by a
-     sequence reaction before the player's action. */
+  /* One enemy action, paid for out of the pool. Shared by the normal enemy
+     phase and by a sequence reaction. Returns false when nothing was possible,
+     which is also what ends that enemy's pool for the turn. */
   function act(e) {
     const s = S();
     if (!s || !s.ents.includes(e) || s.dead) return false;
-    if (e.slow > 0) { e.slow--; return false; }
-    if (e.cd > 0) { e.cd--; return false; }
+    // A knockdown and a rate-of-fire cooldown both cost the whole action.
+    if (e.slow > 0) return false;
+    if (e.cd > 0) return false;
     const d = e.d || {};
     if (d.talk || d.ally) return false; // people and companions do not take enemy turns
     e.preActed = 1;
     const tgt = pickTarget(e);
     const dist = U.cheb(e.x, e.y, tgt.x, tgt.y);
     const ai = d.ai || 'pursue';
+    // An attack is paid for up front and happens once per turn: leftover AP
+    // buys movement, never a second hit before the player acts again.
+    const canHit = !e.attacked && (e.ap | 0) >= ATTACK;
 
     if (dist === 1) {
+      if (!canHit) return false;
       e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
+      e.ap = Math.max(0, (e.ap | 0) - ATTACK);
+      e.attacked = 1;
       WA.combat.enemyHit(e, false, tgt.ally);
       e.cd = Math.max(0, (d.rate || 1) - 1);
       return true;
@@ -93,8 +112,10 @@
     }
 
     if (ai === 'turret') {
-      if (sees && dist <= (d.range || 5)) {
+      if (sees && canHit && dist <= (d.range || 5)) {
         e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
+        e.ap = Math.max(0, (e.ap | 0) - ATTACK);
+        e.attacked = 1;
         WA.combat.enemyHit(e, true, tgt.ally);
         e.cd = Math.max(0, (d.rate || 2) - 1);
         return true;
@@ -102,21 +123,32 @@
       return false;
     }
 
-    if (ai === 'ranged' && sees && dist <= (d.range || 5)) {
+    if (ai === 'ranged' && sees && canHit && dist <= (d.range || 5)) {
       e.face = U.faceTo(tgt.x - e.x, tgt.y - e.y) || e.face;
+      e.ap = Math.max(0, (e.ap | 0) - ATTACK);
+      e.attacked = 1;
       WA.combat.enemyHit(e, true, tgt.ally);
       e.cd = Math.max(0, (d.rate || 2) - 1);
       return true;
     }
 
-    if (sees) return stepToward(e, tgt.x, tgt.y);
-    if (e.last && ai !== 'wander') {
-      stepToward(e, e.last[0], e.last[1]);
+    if ((e.ap | 0) < STEP) return false;
+    let moved = false;
+    if (sees) moved = stepToward(e, tgt.x, tgt.y);
+    else if (e.last && ai !== 'wander') {
+      moved = stepToward(e, e.last[0], e.last[1]);
       if (e.x === e.last[0] && e.y === e.last[1]) e.last = null;
-      return true;
-    }
-    if (ai === 'wander' && Math.random() < 0.5) return wander(e);
-    return false;
+    } else if (ai === 'wander' && Math.random() < 0.5) moved = wander(e);
+    if (moved) e.ap = Math.max(0, (e.ap | 0) - STEP);
+    return moved;
+  }
+
+  /* A sequence reaction is its own one-action turn: a fresh pool, one action. */
+  function react(e) {
+    if (!e) return false;
+    e.ap = maxAp(e);
+    e.attacked = 0;
+    return act(e);
   }
 
   function turn() {
@@ -135,9 +167,23 @@
       // not double-tick them by acting here.
       // A reaction already spent this phase replaces the normal action.
       if (e.reacted) { e.reacted = 0; continue; }
-      act(e);
+      // A knockdown costs the phase; so does a rate-of-fire cooldown, which is
+      // counted in turns rather than actions.
+      if (e.slow > 0) { e.slow--; continue; }
+      if (e.cd > 0) { e.cd--; continue; }
+      // Refresh the pool, then spend it: steps until the AP runs out, with at
+      // most one attack in between.
+      e.ap = maxAp(e);
+      e.attacked = 0;
+      for (let guard = e.ap + 1; e.ap > 0 && guard > 0; guard--) {
+        if (!s.ents.includes(e) || s.dead || s.hp <= 0) break;
+        const before = e.ap;
+        if (!act(e)) break;
+        // An action that spent nothing would loop forever.
+        if (e.ap >= before) break;
+      }
     }
   }
 
-  WA.ai = { turn, act, stepToward, wander, pickTarget };
+  WA.ai = { turn, act, react, stepToward, wander, pickTarget };
 })(window.WA = window.WA || {});

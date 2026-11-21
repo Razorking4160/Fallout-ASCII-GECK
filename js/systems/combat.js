@@ -256,7 +256,9 @@
       e.preActed = 1;
       e.reacted = 1;
       WA.game.say(`${e.d.name} reacts before you (sequence ${enemySequence(e)} vs ${pseq}).`);
-      if (WA.ai && WA.ai.act) WA.ai.act(e);
+      // A reaction gets its own AP pool, or the spent pool from last turn
+      // would leave the quickest enemy unable to do anything at all.
+      if (WA.ai && WA.ai.react) WA.ai.react(e);
       n++;
       if (s.dead || s.hp <= 0) break;
     }

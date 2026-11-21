@@ -27,10 +27,13 @@
     s.stealthLight = null;
   }
 
-  function end(used, apCost) {
+  /* `force` pays AP even while a panel is open. A panel only stops the world
+     from acting between actions; taking a Stimpak, a chem, RadAway or a
+     Doctor's check from the Pip-Boy is still an action and costs its AP. */
+  function end(used, apCost, force) {
     const s = S();
     if (!s) return;
-    if (used && !paused()) {
+    if (used && (force || !paused())) {
       s.turn++;
       // The action pays for itself; the world only acts when the pool is empty.
       const cost = Math.max(0, apCost == null ? STEP : apCost | 0);
@@ -61,6 +64,9 @@
     }
     WA.game.updateVis();
     WA.view.draw();
+    // A forced action can spend AP, empty the pool and refill it, so the open
+    // Pip-Boy needs the new HP and AP rather than the numbers it was built with.
+    if (force && WA.pip && WA.pip.isOpen() && WA.pip.render) WA.pip.render();
   }
 
   function playerMove(dx, dy, tgt) {

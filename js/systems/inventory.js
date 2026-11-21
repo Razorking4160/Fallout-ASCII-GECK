@@ -310,7 +310,7 @@
     } else {
       WA.game.say(`Doctor ${chance}%: the withdrawal holds. Try again.`);
     }
-    WA.turn.end(true, 2);
+    WA.turn.end(true, 2, true);
   }
 
   /* One copy of an item, straight into the player's pockets. Shared by floor
@@ -391,7 +391,7 @@
       (WA.perks ? WA.perks.healMul() : 1));
     s.hp = Math.min(WA.char.maxHp(), s.hp + heal);
     WA.game.say(`You use a Stimpak. +${heal} HP.`);
-    WA.turn.end(true, 2);
+    WA.turn.end(true, 2, true);
   }
 
   function radaway() {
@@ -404,7 +404,7 @@
     s.radaways--;
     const removed = WA.rads.flush();
     WA.game.say(`You use RadAway. ${removed} rads flushed.`);
-    WA.turn.end(true, 2);
+    WA.turn.end(true, 2, true);
   }
 
   function repair(what) {
@@ -490,9 +490,11 @@
     }
     const verb = d.type === 'food' ? 'eat' : d.type === 'book' ? 'read' : 'use';
     WA.game.say(`You ${verb} the ${d.name}` + (bits.length ? `: ${bits.join(', ')}.` : '.'));
-    WA.turn.end(true, 2);
+    WA.turn.end(true, 2, true);
   }
 
+  /* Every one of these passes `force` to turn.end: they are usually pressed
+     from the Pip-Boy, which pauses the world, and the 2 AP must still be paid. */
   function use(kind, slot) {
     if (kind === 'stim') stim();
     else if (kind === 'radaway') radaway();
