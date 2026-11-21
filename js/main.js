@@ -228,7 +228,8 @@
         if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('trade'); }
         return;
       }
-      if (KEYS[ev.key]) { ev.preventDefault(); WA.turn.playerMove(KEYS[ev.key][0], KEYS[ev.key][1]); }
+      // Shift is the one-shot run pace, exactly as the game binds it.
+      if (KEYS[ev.key]) { ev.preventDefault(); WA.turn.playerMove(KEYS[ev.key][0], KEYS[ev.key][1], null, ev.shiftKey); }
       else if (ev.key === ' ') { ev.preventDefault(); WA.turn.wait(); }
       else if (ev.key === 'h') WA.inv.stim();
       else if (ev.key === 'r') WA.inv.use('radaway');

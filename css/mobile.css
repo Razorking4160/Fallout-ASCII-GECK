@@ -8,6 +8,7 @@
   #bar{font-size:14px;padding:6px 8px}
   #log{font-size:13px}
   #pip,#chargen,#vats,#dlg,#trade,#pick,#loot,#lock,#hack,#gamble,#ending,#death{font-size:14px;padding:6px 8px}
+  .dlgface{font-size:10px}
   .cgcard{font-size:11px;padding:4px 6px}
   .cgname{font-size:13px}
   .gamtabs button{height:42px;font-size:11px}

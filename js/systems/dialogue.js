@@ -151,7 +151,8 @@
       `<div class="prow"><span class="hero">${U.esc(d.name)}</span>` +
       `<span class="acts"><small class="dim">${U.esc(d.title || '')}${c.hours ? ' · ' + c.hours : ''}</small>` +
       `<button class="closex" data-close="dlg" aria-label="Close dialogue">×</button></span></div>` +
-      `<div class="dlgtext">${U.esc(val(n.text, c) || '')}</div>` + job + closedHtml + checkMsg +
+      `<div class="dlgsay">${WA.heads ? WA.heads.html(NPC) : ''}` +
+      `<div class="dlgtext">${U.esc(val(n.text, c) || '')}</div></div>` + job + closedHtml + checkMsg +
       `<div class="use">${buttons}</div>`);
 
     // A node's once-only effects land after it has been read, so the first

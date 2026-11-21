@@ -54,5 +54,24 @@ body.noanim #crt::after{animation:none}
 @keyframes fxdeath{0%{opacity:1;transform:scale(.7)}60%{opacity:.9}100%{opacity:0;transform:scale(1.5) rotate(25deg)}}
 @keyframes fxswing{0%{opacity:0;transform:scale(.6) rotate(-18deg)}30%{opacity:1}100%{opacity:0;transform:scale(1.4) rotate(16deg)}}
 @keyframes fxchunk{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--gx,0),var(--gy,-1em)) scale(.55)}}
+/* A speaker's ASCII bust beside the words (heads.js). The eyes are two stacked
+   glyphs and a seven-second blink, offset per speaker; Animate off leaves them
+   open. */
+.dlgsay{display:flex;gap:8px;align-items:flex-start}
+.dlgsay .dlgtext{flex:1;min-width:0}
+.dlgface{flex:none;margin:2px 0 0;font-size:11px;line-height:1.06;letter-spacing:.02em;
+  color:var(--dim);white-space:pre}
+.dlgface .eye{display:inline-grid;color:var(--hero)}
+.dlgface .eye>*{grid-area:1/1;text-align:center;font-style:normal;font-weight:400}
+.dlgface .eye i{opacity:0}
+.dlgface.blink .eye b,.dlgface.blink .eye i{animation-duration:7s;animation-timing-function:steps(1,end);animation-iteration-count:infinite;animation-delay:var(--hb,0s)}
+.dlgface.blink .eye b{animation-name:headopen}
+.dlgface.blink .eye i{animation-name:headshut}
+body.noanim .dlgface .eye b,body.noanim .dlgface .eye i{animation:none}
+body.noanim .dlgface .eye b{opacity:1}
+body.noanim .dlgface .eye i{opacity:0}
+@keyframes headopen{0%,93%{opacity:1}94%,98%{opacity:0}99%,100%{opacity:1}}
+@keyframes headshut{0%,93%{opacity:0}94%,98%{opacity:1}99%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.dlgface .eye b,.dlgface .eye i{animation:none!important}}
 #grid{display:block;margin:0 auto;image-rendering:pixelated;cursor:crosshair}
 #edit input[type="range"]{width:auto;flex:1;padding:0;min-width:0}

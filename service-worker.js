@@ -124,6 +124,7 @@
 /* 0.75.0: the Pip-Boy opens inside the play pane instead of over the whole studio. */
 /* 0.75.1: every game panel, the backdrop and the menu open inside the play pane. */
 /* 0.76.0: the play pane shows melee swings and dismemberment, the new ground tiles, the vault-door menu and the walk/run pace. */
+/* 0.77.0: shared ASCII talking heads in the play pane, and Shift + a direction runs there too. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;
@@ -187,6 +188,7 @@ const APP_FILES = [
   "./js/systems/field.js",
   "./js/systems/gambling.js",
   "./js/systems/hacking.js",
+  "./js/systems/heads.js",
   "./js/systems/inventory.js",
   "./js/systems/limbs.js",
   "./js/systems/lockpick.js",
