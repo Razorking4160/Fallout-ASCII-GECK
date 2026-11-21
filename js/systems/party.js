@@ -642,24 +642,52 @@
     if (foe && (dist === 1 || canShoot)) attack(e, foe, m);
   }
 
-  function turn() {
+  /* The ally phase is split like the enemy one: begin() takes the roster and
+     next() resolves one companion's turn, so the board can be redrawn between
+     them and a follower walks its step instead of jumping. */
+  const P = { queue: [], i: 0 };
+
+  function begin() {
     const s = S();
-    if (!s || s.dead) return;
-    for (const m of roster(s).slice()) {
+    if (!s || s.dead) { P.queue = []; P.i = 0; return false; }
+    P.queue = roster(s).slice();
+    P.i = 0;
+    return P.queue.length > 0;
+  }
+
+  /* One companion per call. A bleed tick, a spawn, a self-care Stimpak and a
+     step are each a beat of their own. */
+  function next() {
+    const s = S();
+    if (!s || s.dead) return false;
+    while (P.i < P.queue.length) {
+      const m = P.queue[P.i++];
       if (!memberIn(s, m.id)) continue;
       if (m.down) {
         m.bleed = (m.bleed | 0) - 1;
         if (m.bleed <= 0) die(m);
-        continue;
+        return true;
       }
       tickFx(m);
       const e = entOf(s, m);
-      if (!e) { if (!spawnNear(s, m)) continue; continue; }
-      if (selfCare(m)) continue;
-      if (wantsChem(s, m) && takeChem(m)) continue;
+      if (!e) { if (!spawnNear(s, m)) continue; return true; }
+      if (selfCare(m)) return true;
+      if (wantsChem(s, m) && takeChem(m)) return true;
       act(s, e, m);
-      if (s.dead) return;
+      return true;
     }
+    return false;
+  }
+
+  function cancel() {
+    P.queue = [];
+    P.i = 0;
+  }
+
+  /* The synchronous phase: the same work with no frames between companions. */
+  function turn() {
+    begin();
+    while (next());
   }
 
   /* ---------- PARTY screen ---------- */
@@ -797,7 +825,7 @@
 
   WA.party = {
     MAX, BLEED, MODES, SLOTS, STIM_MAX, MED_MAX, HEAL_AT,
-    recruit, dismiss, command, stabilize, sync, turn, html, act: actFromPanel,
+    recruit, dismiss, command, stabilize, sync, turn, begin, next, cancel, html, act: actFromPanel,
     react, stance: stanceOf,
     equip, unequip, gearStats, allows,
     giveSupply, takeSupply, canMed, canChem, canSupply, selfCare, takeChem, tickFx,

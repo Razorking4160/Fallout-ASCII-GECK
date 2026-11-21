@@ -264,5 +264,13 @@
     while (next());
   }
 
-  WA.ai = { turn, begin, next, act, react, stepToward, wander, pickTarget };
+  /* Forget a phase in progress: the world it was walking has been replaced by a
+     load, a new game or a travel. */
+  function cancel() {
+    P.queue = [];
+    P.i = 0;
+    P.cur = null;
+  }
+
+  WA.ai = { turn, begin, next, cancel, act, react, stepToward, wander, pickTarget };
 })(window.WA = window.WA || {});

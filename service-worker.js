@@ -108,6 +108,7 @@
 /* 0.65.0: release cut for the shared AP turns, enemy AP pools and Pip-Boy item AP costs. */
 /* 0.65.1: shared gunner repositioning synced from the game. */
 /* 0.65.2: shared paced enemy phase synced from the game. */
+/* 0.65.3: shared paced companion turns and phase cancellation synced from the game. */
 importScripts("./js/data/version.js");
 
 const CACHE_NAME = "wasteland-ascii-v" + self.WA_VERSION;

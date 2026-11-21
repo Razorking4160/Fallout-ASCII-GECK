@@ -43,8 +43,6 @@
     // A load can replace the state mid-phase; then only the board is redrawn.
     const live = WA.game.S === s;
     if (live) {
-      // Companions take their turn after the enemies, once the player is safe.
-      if (s.hp > 0 && WA.party) WA.party.turn();
       s.sneakMoved = false;
       s.stealthLight = null;
       collapse(s);
@@ -56,22 +54,50 @@
     if (live && again && !s.dead) { again = false; round(s); }
   }
 
-  function phase(s) {
-    if (!WA.ai || !WA.ai.begin || !animate()) {
-      WA.ai.turn();
-      finish(s);
-      return;
-    }
-    busy = true;
-    WA.ai.begin();
+  /* Both world phases run through the same beat: one action, one redraw. */
+  function beats(s, src, done) {
     const beat = () => {
       timer = 0;
-      if (WA.game.S !== s || s.dead || s.hp <= 0 || !WA.ai.next()) return finish(s);
+      if (WA.game.S !== s || s.dead || s.hp <= 0 || !src.next()) return done();
       WA.game.updateVis();
       WA.view.draw();
       timer = setTimeout(beat, BEAT);
     };
     beat();
+  }
+
+  /* Companions take their turn after the enemies, once the player is safe, and
+     at the same pace: a follower crossing a corridor walks it. */
+  function allies(s) {
+    if (s.hp <= 0 || !WA.party) return finish(s);
+    if (!animate() || !WA.party.begin || !WA.party.next) {
+      WA.party.turn();
+      return finish(s);
+    }
+    WA.party.begin();
+    beats(s, WA.party, () => finish(s));
+  }
+
+  function phase(s) {
+    if (!WA.ai || !WA.ai.begin || !animate()) {
+      WA.ai.turn();
+      return allies(s);
+    }
+    busy = true;
+    WA.ai.begin();
+    beats(s, WA.ai, () => allies(s));
+  }
+
+  /* A load or a new game replaces the world mid-phase: drop the pending beat,
+     the queued turn and both phase queues so nothing from the old state keeps
+     acting on the new one. */
+  function cancel() {
+    if (timer) clearTimeout(timer);
+    timer = 0;
+    busy = false;
+    again = false;
+    if (WA.ai && WA.ai.cancel) WA.ai.cancel();
+    if (WA.party && WA.party.cancel) WA.party.cancel();
   }
 
   /* The world's turn. It runs once the player's AP is spent and refills the
@@ -235,5 +261,5 @@
     end(true, 0);
   }
 
-  WA.turn = { end, playerMove, wait, paused, busy: () => busy };
+  WA.turn = { end, playerMove, wait, paused, cancel, busy: () => busy };
 })(window.WA = window.WA || {});

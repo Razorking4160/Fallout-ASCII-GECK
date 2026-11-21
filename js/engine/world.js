@@ -133,6 +133,9 @@
   function start(id, test) {
     const GAME = WA.GAME, m = normalizeMap(id);
     if (!m) return false;
+    // The state is about to be replaced: a phase still playing out belongs to
+    // the old one.
+    if (WA.turn && WA.turn.cancel) WA.turn.cancel();
     if (WA.dlg) WA.dlg.close();
     if (WA.loot) WA.loot.abort();
     if (WA.lockpick) WA.lockpick.abort();
@@ -628,6 +631,8 @@
 
     if (WA.loot) WA.loot.abort();
     if (WA.lockpick) WA.lockpick.abort();
+    // A phase from the loaded-over state must not keep beating on this one.
+    if (WA.turn && WA.turn.cancel) WA.turn.cancel();
     G.S = s;
     G.WORLD = WORLD;
     rebuild(s);
