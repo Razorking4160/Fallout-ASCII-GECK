@@ -203,39 +203,66 @@
     return act(e);
   }
 
-  function turn() {
-    const s = S();
-    if (!s) return;
+  /* The phase is split into single actions so the board can be redrawn between
+     them: the player watches a step land instead of seeing the enemy jump. The
+     driver lives in turn.js; begin() takes the order and next() performs one
+     action per call. */
+  const P = { queue: [], i: 0, cur: null };
 
+  function begin() {
+    const s = S();
+    if (!s) return false;
     // Enemies act in sequence order, highest first. The player's own action is
     // resolved separately; this order matters for who reaches whom first.
-    const order = [...s.ents].filter(e => !(e.d && e.d.ally)).sort((a, b) => {
+    P.queue = [...s.ents].filter(e => !(e.d && e.d.ally)).sort((a, b) => {
       if (!WA.combat) return 0;
       return WA.combat.enemySequence(b) - WA.combat.enemySequence(a);
     });
-    for (const e of order) {
-      if (!s.ents.includes(e)) continue;
-      // Status effects tick once per action in turn.end(), so a reaction does
-      // not double-tick them by acting here.
-      // A reaction already spent this phase replaces the normal action.
-      if (e.reacted) { e.reacted = 0; continue; }
-      // A knockdown costs the phase; so does a rate-of-fire cooldown, which is
-      // counted in turns rather than actions.
-      if (e.slow > 0) { e.slow--; continue; }
-      if (e.cd > 0) { e.cd--; continue; }
-      // Refresh the pool, then spend it: steps until the AP runs out, with at
-      // most one attack in between.
-      e.ap = maxAp(e);
-      e.attacked = 0;
-      for (let guard = e.ap + 1; e.ap > 0 && guard > 0; guard--) {
-        if (!s.ents.includes(e) || s.dead || s.hp <= 0) break;
-        const before = e.ap;
-        if (!act(e)) break;
-        // An action that spent nothing would loop forever.
-        if (e.ap >= before) break;
+    P.i = 0;
+    P.cur = null;
+    return P.queue.length > 0;
+  }
+
+  /* One action, or one enemy's skipped turn, per call. Returns false when the
+     phase is over or the player is down. */
+  function next() {
+    const s = S();
+    if (!s || s.dead || s.hp <= 0) return false;
+    for (;;) {
+      if (!P.cur) {
+        if (P.i >= P.queue.length) return false;
+        const e = P.queue[P.i++];
+        if (!s.ents.includes(e)) continue;
+        // Status effects tick once per action in turn.end(), so a reaction does
+        // not double-tick them by acting here.
+        // A reaction already spent this phase replaces the normal action.
+        if (e.reacted) { e.reacted = 0; continue; }
+        // A knockdown costs the phase; so does a rate-of-fire cooldown, which is
+        // counted in turns rather than actions.
+        if (e.slow > 0) { e.slow--; continue; }
+        if (e.cd > 0) { e.cd--; continue; }
+        // Refresh the pool, then spend it: steps until the AP runs out, with at
+        // most one attack in between.
+        e.ap = maxAp(e);
+        e.attacked = 0;
+        P.cur = e;
+        continue;
       }
+      const e = P.cur;
+      if (!s.ents.includes(e) || (e.ap | 0) <= 0) { P.cur = null; continue; }
+      const before = e.ap;
+      // An action that spent nothing would loop forever.
+      if (!act(e) || (e.ap | 0) >= before) { P.cur = null; continue; }
+      return true;
     }
   }
 
-  WA.ai = { turn, act, react, stepToward, wander, pickTarget };
+  /* The synchronous phase: the same work with no frames between actions. Used
+     when animation is off, and by the headless checks. */
+  function turn() {
+    begin();
+    while (next());
+  }
+
+  WA.ai = { turn, begin, next, act, react, stepToward, wander, pickTarget };
 })(window.WA = window.WA || {});

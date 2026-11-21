@@ -5,26 +5,85 @@
   'use strict';
   const U = WA.util;
   const S = () => WA.game.S;
-  // An open panel pauses the world: no world turn, no enemy actions.
-  const paused = () => WA.ui.paused();
+  // An open panel pauses the world: no world turn, no enemy actions. A world
+  // turn that is still playing out holds the player the same way.
+  const paused = () => WA.ui.paused() || busy;
 
   // A step is one point. Attacks pass their own cost (see combat.attackCost),
   // so a round is about two rifle shots or a handful of steps.
   const STEP = 1;
 
+  /* ---------- the world's turn -----------------------------------------
+     The enemy phase is played out one action per beat and the board is redrawn
+     between them, so a step reads as a step instead of a jump. The logic is
+     still turn-based: the beat only paces presentation, and nothing in the
+     rules reads a frame clock. */
+  const BEAT = 110;   // ms between enemy actions
+  let busy = false, timer = 0, again = false;
+
+  /* Animation off, or a system asked for less motion: run the phase at once. */
+  function animate() {
+    if (WA.settings && !WA.settings.anim) return false;
+    return !(typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  /* The one place a player death is declared, so a hit taken during the paced
+     phase ends the run the same way a hit taken during an action does. */
+  function collapse(s) {
+    if (!s || s.hp > 0 || s.dead) return false;
+    s.hp = 0;
+    s.dead = true;
+    WA.game.say('You collapse in the dust. Game over.');
+    return true;
+  }
+
+  function finish(s) {
+    timer = 0;
+    busy = false;
+    // A load can replace the state mid-phase; then only the board is redrawn.
+    const live = WA.game.S === s;
+    if (live) {
+      // Companions take their turn after the enemies, once the player is safe.
+      if (s.hp > 0 && WA.party) WA.party.turn();
+      s.sneakMoved = false;
+      s.stealthLight = null;
+      collapse(s);
+    }
+    WA.game.updateVis();
+    WA.view.draw();
+    // Anything that spent the last AP while the phase was running gets its own
+    // turn now, rather than a free round.
+    if (live && again && !s.dead) { again = false; round(s); }
+  }
+
+  function phase(s) {
+    if (!WA.ai || !WA.ai.begin || !animate()) {
+      WA.ai.turn();
+      finish(s);
+      return;
+    }
+    busy = true;
+    WA.ai.begin();
+    const beat = () => {
+      timer = 0;
+      if (WA.game.S !== s || s.dead || s.hp <= 0 || !WA.ai.next()) return finish(s);
+      WA.game.updateVis();
+      WA.view.draw();
+      timer = setTimeout(beat, BEAT);
+    };
+    beat();
+  }
+
   /* The world's turn. It runs once the player's AP is spent and refills the
      pool for the next player phase. */
   function round(s) {
+    if (busy) { again = true; return; }
     s.ap = WA.char.maxAp();
     s.round = (s.round | 0) + 1;
     if (s.hp <= 0) return;
     // Enemy detection needs current light at the player, not last frame's light.
     if (s.sneak) s.stealthLight = WA.light.stealth(s);
-    WA.ai.turn();
-    // Companions take their turn after the enemies, once the player is safe.
-    if (s.hp > 0 && WA.party) WA.party.turn();
-    s.sneakMoved = false;
-    s.stealthLight = null;
+    phase(s);
   }
 
   /* `force` pays AP even while a panel is open. A panel only stops the world
@@ -57,11 +116,7 @@
       if (WA.sched) WA.sched.sync(s);
       if (s.hp > 0 && s.ap <= 0) round(s);
     }
-    if (s.hp <= 0) {
-      s.hp = 0;
-      s.dead = true;
-      WA.game.say('You collapse in the dust. Game over.');
-    }
+    collapse(s);
     WA.game.updateVis();
     WA.view.draw();
     // A forced action can spend AP, empty the pool and refill it, so the open
@@ -180,5 +235,5 @@
     end(true, 0);
   }
 
-  WA.turn = { end, playerMove, wait, paused };
+  WA.turn = { end, playerMove, wait, paused, busy: () => busy };
 })(window.WA = window.WA || {});

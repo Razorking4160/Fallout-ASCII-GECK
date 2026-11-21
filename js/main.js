@@ -17,9 +17,15 @@
   WA.ui.show = show;
 
   function bindPlay() {
+    // The world's turn plays out a beat at a time. Input waits for it, exactly
+    // as it waits for an open panel.
+    const busy = () => !!(WA.turn && WA.turn.busy && WA.turn.busy());
+    const whenIdle = fn => (...a) => { if (!busy()) fn(...a); };
+
     // D-pad: one step on touch, repeat while held.
     document.querySelectorAll('button[data-d]').forEach(b => {
       const step = () => {
+        if (busy()) return;
         const parts = b.dataset.d.split(',').map(Number);
         WA.turn.playerMove(parts[0], parts[1]);
       };
@@ -39,11 +45,11 @@
       b.addEventListener('contextmenu', e => e.preventDefault());
     });
 
-    document.querySelector('[data-k="pip"]').addEventListener('click', () => WA.pip.toggle());
-    document.querySelector('[data-k="fire"]').addEventListener('click', () => WA.combat.fire());
-    document.querySelector('[data-k="throw"]').addEventListener('click', () => WA.combat.throwItem());
-    document.querySelector('[data-k="vats"]').addEventListener('click', () => WA.vats.toggle());
-    document.querySelector('[data-k="wait"]').addEventListener('click', () => WA.turn.wait());
+    document.querySelector('[data-k="pip"]').addEventListener('click', whenIdle(() => WA.pip.toggle()));
+    document.querySelector('[data-k="fire"]').addEventListener('click', whenIdle(() => WA.combat.fire()));
+    document.querySelector('[data-k="throw"]').addEventListener('click', whenIdle(() => WA.combat.throwItem()));
+    document.querySelector('[data-k="vats"]').addEventListener('click', whenIdle(() => WA.vats.toggle()));
+    document.querySelector('[data-k="wait"]').addEventListener('click', whenIdle(() => WA.turn.wait()));
 
     // Every panel is a fixed modal over the map on small screens. WA.ui owns the
     // panel list, the backdrop and the dismissal order, so nothing is copied here.
@@ -65,9 +71,10 @@
       });
     }
 
-    $('bar').onclick = () => WA.pip.toggle();
+    $('bar').onclick = whenIdle(() => WA.pip.toggle());
 
     $('pip').addEventListener('click', e => {
+      if (busy()) return;
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.tab) WA.pip.setTab(b.dataset.tab);
@@ -168,6 +175,7 @@
       if (/editing|forging|benching/.test(document.body.className)) return;
       if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
       if (!WA.game.S) return;
+      if (busy()) return;
       if (WA.ui.isOpen('chargen')) return;
       if (WA.ui.isOpen('ending')) {
         if (ev.key === 'Escape') { ev.preventDefault(); WA.ui.close('ending'); }

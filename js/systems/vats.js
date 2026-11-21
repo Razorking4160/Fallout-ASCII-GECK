@@ -94,6 +94,9 @@
 
   function shot(p) {
     const s = S();
+    // The world's turn is still playing out; a shot now would spend a turn that
+    // has not started yet.
+    if (WA.turn && WA.turn.busy && WA.turn.busy()) return;
     if (!VT || s.ap < cost() || !s.ents.includes(VT)) { VS = 1; return ui(); }
     const wp = WA.GAME.items[s.weapon] || {};
     if (s.weapon && WA.weapons.isBroken(s.weapon)) {
