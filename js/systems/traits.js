@@ -45,7 +45,7 @@
       id: 'fast_shot', name: 'Fast Shot',
       benefit: '−1 AP on weapon attacks',
       penalty: 'No aimed shots',
-      desc: 'You fire before aiming. VATS costs one less AP, but only a torso shot is available.'
+      desc: 'You fire before aiming. Every attack costs one less AP, but VATS only offers a torso shot.'
     },
     {
       id: 'finesse', name: 'Finesse',

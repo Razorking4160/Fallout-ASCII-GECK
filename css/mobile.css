@@ -21,9 +21,9 @@
   #app{padding:6px 8px;gap:6px}
   #bar{font-size:12px;padding:4px 6px}
   #log{height:3.4em;font-size:12px;line-height:1.25}
-  #pad{gap:5px;grid-template-columns:repeat(6,1fr)}
-  #pad button:not(.small){height:34px;font-size:15px}
-  #pad button.small{height:30px;font-size:13px}
+  #pad{gap:5px;grid-template-columns:repeat(3,1fr)}
+  #pad button:not(.small){height:28px;font-size:14px}
+  #pad button.small{height:25px;font-size:12px}
 }
 @media (max-height:640px){
   #log{height:5.2em}

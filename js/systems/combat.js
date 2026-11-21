@@ -10,6 +10,8 @@
 
   function kill(e, msg) {
     const s = S();
+    // Fire falls back to the nearest enemy once the marked one is gone.
+    if (s && s.fireTarget === e) s.fireTarget = null;
     if (WA.quests) WA.quests.onKill(e);
     WA.game.removeEntity(e);
     const c = e.d.caps ? Math.round(U.rnd(...WA.scale.mobCaps(e.d)) *
@@ -152,6 +154,16 @@
     return true;
   }
 
+  /* Action points one attack costs. Fire, a melee bump and VATS all use this,
+     so the perk and trait discounts apply everywhere. */
+  function attackCost(wp) {
+    const ranged = ((wp && wp.range) || 1) > 1;
+    let base = ranged ? 4 : 3;
+    if (WA.perks) base = ranged ? WA.perks.rangedApCost(base) : WA.perks.hthApCost(base);
+    if (WA.traits) base = WA.traits.attackAp(base);
+    return Math.max(1, base | 0);
+  }
+
   /* One player hit. opts carries VATS modifiers: mul, cripple, weak, tag. */
   function playerAttack(e, opts) {
     const s = S(), o = opts || {};
@@ -228,6 +240,10 @@
   function initiative() {
     const s = S();
     if (!s || s.dead) return 0;
+    // One reaction per player phase: a quick enemy does not react again for
+    // every point of AP spent in the same round.
+    if (s.initRound === (s.round | 0)) return 0;
+    s.initRound = s.round | 0;
     const pseq = sequence();
     const ready = s.ents.filter(e => {
       if (!e.d || e.d.talk || e.d.ally || e.preActed) return false;
@@ -238,7 +254,7 @@
     let n = 0;
     for (const e of ready) {
       e.preActed = 1;
-      e.skipTurn = s.turn + 1;
+      e.reacted = 1;
       WA.game.say(`${e.d.name} reacts before you (sequence ${enemySequence(e)} vs ${pseq}).`);
       if (WA.ai && WA.ai.act) WA.ai.act(e);
       n++;
@@ -403,7 +419,47 @@
       WA.game.say(`You throw the ${d.name} at the ${e.d.name}.`);
       blast(e.x, e.y, d);
     }
-    WA.turn.end(true);
+    WA.turn.end(true, 3);
+  }
+
+  /* ---------- target selection ---------- */
+  /* Only a standing, hostile enemy can be the Fire target. When the marked one
+     is gone the mark is dropped and Fire falls back to the nearest enemy. */
+  function selected() {
+    const s = S();
+    const e = s && s.fireTarget;
+    if (!e) return null;
+    if (!Array.isArray(s.ents) || !s.ents.includes(e) || !e.d || e.d.talk || e.d.ally) {
+      s.fireTarget = null;
+      return null;
+    }
+    return e;
+  }
+
+  function inReach(e, rng) {
+    const s = S();
+    return !!e && !!s && U.cheb(e.x, e.y, s.px, s.py) <= rng &&
+      WA.vis.los(s.px, s.py, e.x, e.y);
+  }
+
+  function nearest(rng) {
+    const s = S();
+    let best = null, bd = 99;
+    for (const e of s.ents) {
+      if (!e.d || e.d.talk || e.d.ally) continue;
+      const dd = U.cheb(e.x, e.y, s.px, s.py);
+      if (dd <= rng && dd < bd && WA.vis.los(s.px, s.py, e.x, e.y)) { best = e; bd = dd; }
+    }
+    return best;
+  }
+
+  /* VATS "Set" marks an enemy without firing, so Fire aims where you chose. */
+  function select(e) {
+    const s = S();
+    if (!s) return null;
+    s.fireTarget = e && s.ents.includes(e) ? e : null;
+    if (s.fireTarget) WA.game.say(`Target: ${e.d.name}. Fire will aim at it.`);
+    return s.fireTarget;
   }
 
   function fire() {
@@ -420,13 +476,16 @@
       return WA.view.draw();
     }
 
-    let best = null, bd = 99;
-    for (const e of s.ents) {
-      if (e.d && (e.d.talk || e.d.ally)) continue;
-      const dd = U.cheb(e.x, e.y, s.px, s.py);
-      if (dd <= rng && dd < bd && WA.vis.los(s.px, s.py, e.x, e.y)) { best = e; bd = dd; }
+    // The enemy marked in VATS wins; otherwise the nearest visible one.
+    let best = selected();
+    if (best && !inReach(best, rng)) {
+      WA.game.say(`${best.d.name} is out of range.`);
+      return WA.view.draw();
     }
+    if (!best) best = nearest(rng);
     if (!best) { WA.game.say('No target in range.'); return WA.view.draw(); }
+    const bd = U.cheb(best.x, best.y, s.px, s.py);
+    const cost = attackCost(wp);
 
     initiative();
     if (s.dead || s.hp <= 0) return;
@@ -435,13 +494,13 @@
     for (let i = 0; i < shots; i++) WA.inv.spendAmmo(ammoId);
     if (WA.weapons.use() === 'jam') {
       WA.game.say(`Your ${wp.name} jams!`);
-      return WA.turn.end(true);
+      return WA.turn.end(true, cost);
     }
     if (WA.traits && WA.traits.jinxed() && Math.random() < 0.05) {
       WA.game.say(`Jinxed! Your ${wp.name || 'weapon'} slips and the burst goes wild.`);
-      return WA.turn.end(true);
+      return WA.turn.end(true, cost);
     }
-    if (criticalFailure(wp, true)) return WA.turn.end(true);
+    if (criticalFailure(wp, true)) return WA.turn.end(true, cost);
     if (shots > 1) WA.game.say(`The ${wp.name} fires ${shots} rounds.`);
     const spread = Math.max(0, wp.spread | 0);
     for (let i = 0; i < shots; i++) {
@@ -454,8 +513,9 @@
       playerAttack(best, { ammo: ammoId, tag: shots > 1 ? `Burst ${i + 1}/${shots}: ` : '' });
     }
     if (WA.field) WA.field.breakSneak();
-    WA.turn.end(true);
+    WA.turn.end(true, cost);
   }
 
-  WA.combat = { playerAttack, enemyHit, enemyChance, sequence, enemySequence, initiative, fire, throwItem, explosives, throwTarget, blast, kill, knockPlayer, criticalFailure };
+  WA.combat = { playerAttack, enemyHit, enemyChance, sequence, enemySequence, initiative, attackCost,
+    selected, select, fire, throwItem, explosives, throwTarget, blast, kill, knockPlayer, criticalFailure };
 })(window.WA = window.WA || {});

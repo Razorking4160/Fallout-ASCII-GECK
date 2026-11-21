@@ -310,7 +310,7 @@
     } else {
       WA.game.say(`Doctor ${chance}%: the withdrawal holds. Try again.`);
     }
-    WA.turn.end(true);
+    WA.turn.end(true, 2);
   }
 
   /* One copy of an item, straight into the player's pockets. Shared by floor
@@ -391,7 +391,7 @@
       (WA.perks ? WA.perks.healMul() : 1));
     s.hp = Math.min(WA.char.maxHp(), s.hp + heal);
     WA.game.say(`You use a Stimpak. +${heal} HP.`);
-    WA.turn.end(true);
+    WA.turn.end(true, 2);
   }
 
   function radaway() {
@@ -404,7 +404,7 @@
     s.radaways--;
     const removed = WA.rads.flush();
     WA.game.say(`You use RadAway. ${removed} rads flushed.`);
-    WA.turn.end(true);
+    WA.turn.end(true, 2);
   }
 
   function repair(what) {
@@ -490,7 +490,7 @@
     }
     const verb = d.type === 'food' ? 'eat' : d.type === 'book' ? 'read' : 'use';
     WA.game.say(`You ${verb} the ${d.name}` + (bits.length ? `: ${bits.join(', ')}.` : '.'));
-    WA.turn.end(true);
+    WA.turn.end(true, 2);
   }
 
   function use(kind, slot) {

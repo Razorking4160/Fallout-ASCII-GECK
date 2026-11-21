@@ -122,6 +122,8 @@
     const clock = WA.time ? WA.time.label(S) : '';
     const limb = WA.limbs ? WA.limbs.tag(S) : '';
     const shaken = S.shaken && S.shaken.turns > 0 ? `SHAKEN −${S.shaken.pen || 10}%` : '';
+    // The enemy Fire is pointed at, if one has been marked in VATS.
+    const tgt = WA.combat && WA.combat.selected ? WA.combat.selected() : null;
     // The waypoint lives on the Pip-Boy map, so the play HUD carries its bearing.
     const wpt = WA.quests && WA.quests.waypoint ? WA.quests.waypoint() : null;
     const off = !wpt && WA.quests && WA.quests.waypointElsewhere ? WA.quests.waypointElsewhere() : null;
@@ -130,17 +132,20 @@
       : (off ? `<span class="wp off" title="Waypoint — ${U.esc(off.name)} — objective in ${U.esc(off.mapName)}">◉ ${U.esc(off.mapName)}</span>` : '');
     U.setHtml('bar', `<span class="clock">${U.esc(clock)}</span>` +
       `<span class="dim" title="Facing ${U.esc(S.face || 's')}">${U.arrow(S.face || 's')}</span>` +
-      `<span class="${S.hp <= hp * 0.3 ? 'bad' : ''}">HP ${S.hp}/${hp}</span><span>LV${S.lvl}${S.pts ? '*' : ''} ${S.lvl >= WA.scale.CAP ? 'MAX' : S.xp + '/' + WA.char.need()}</span><span>Caps ${S.caps}</span><span>Stim ${S.stims}</span>` +
+      `<span class="${S.hp <= hp * 0.3 ? 'bad' : ''}">HP ${S.hp}/${hp}</span>` +
+      `<span class="${(S.ap | 0) <= 0 ? 'warn' : ''}">AP ${S.ap | 0}/${WA.char.maxAp()}</span>` +
+      `<span>LV${S.lvl}${S.pts ? '*' : ''} ${S.lvl >= WA.scale.CAP ? 'MAX' : S.xp + '/' + WA.char.need()}</span><span>Caps ${S.caps}</span><span>Stim ${S.stims}</span>` +
       (rads ? `<span class="warn">RADS ${rads}</span>` : '') +
       (limb ? `<span class="bad">CRIPPLED ${U.esc(limb)}</span>` : '') +
       (shaken ? `<span class="warn">${U.esc(shaken)}</span>` : '') +
       (S.weapon && cnd < 25 ? `<span class="bad">CND ${cnd}%</span>` : '') +
       (S.armor && acnd < 25 ? `<span class="bad">ARM ${acnd}%</span>` : '') +
-      (fx ? `<span class="bad">${U.esc(fx)}</span>` : '') + wpHud);
+      (fx ? `<span class="bad">${U.esc(fx)}</span>` : '') +
+      (tgt ? `<span class="warn">TGT ${U.esc(tgt.d.name)}</span>` : '') + wpHud);
     U.setHtml('log', S.log.map(t => `<div>${U.esc(t)}</div>`).join(''));
     if (!U.el('pip').hidden) WA.char.pip();
     WA.vats.ui();
-    U.setText('vatsbtn', 'VATS ' + S.ap);
+    U.setText('vatsbtn', 'VATS ' + (S.ap | 0) + '/' + WA.char.maxAp());
     const wp = S.weapon && WA.GAME.items[S.weapon];
     const ammoId = wp && wp.ammo ? WA.inv.loadedAmmo(wp) : null;
     const ammoDef = ammoId ? WA.GAME.items[ammoId] : null;
@@ -163,6 +168,8 @@
     const cols = Math.min(S.w, VW), rows = Math.min(S.h, VH);
     const cx = Math.max(0, Math.min(S.w - VW, S.px - (VW >> 1)));
     const cy = Math.max(0, Math.min(S.h - VH, S.py - (VH >> 1)));
+    // The marked Fire target wears a ring, so the choice is visible on the map.
+    const tgt = WA.combat && WA.combat.selected ? WA.combat.selected() : null;
     const vis = S.vis || WA.vis.compute(S);
     const light = S.light || WA.light.compute(S);
     fitGrid(cols, rows, availW);
@@ -183,6 +190,7 @@
           d = e.d || {}; ch = d.glyph || '?';
           // Every NPC carries the same caret, dimmer, so you can read who is looking where.
           c = (d.c || 'bad') + ' face face-' + (e.face || 's');
+          if (e === tgt) c += ' tgt';
         }
         else if (it) {
           d = WA.GAME.items[it] || {};

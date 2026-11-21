@@ -15,12 +15,8 @@
 
   let VS = 0, VT = null;
   const reset = () => { VS = 0; VT = null; };
-  const cost = () => {
-    const ranged = ((WA.GAME.items[S().weapon] || {}).range || 1) > 1;
-    let base = ranged ? 4 : 3;
-    if (WA.perks) base = ranged ? WA.perks.rangedApCost(base) : WA.perks.hthApCost(base);
-    return WA.traits ? WA.traits.attackAp(base) : base;
-  };
+  // One source of truth: Fire, a melee bump and VATS charge the same AP.
+  const cost = () => (WA.combat ? WA.combat.attackCost(WA.GAME.items[S().weapon] || {}) : 4);
   const range = () => (WA.GAME.items[S().weapon] || {}).range || 1;
   const vhit = (e, p) => {
     const wp = WA.GAME.items[S().weapon] || {};
@@ -28,7 +24,8 @@
   };
   const targets = () => S().ents.filter(e => !(e.d && (e.d.talk || e.d.ally)) && U.cheb(e.x, e.y, S().px, S().py) <= range() && WA.vis.los(S().px, S().py, e.x, e.y));
 
-  const btn = 'style="width:72px;font-size:14px"';
+  const btn = 'style="width:68px;font-size:14px"';
+  const setBtn = 'style="width:50px;font-size:11px"';
   const wide = 'style="height:36px;width:100%;margin-top:6px;font-size:14px"';
 
   function ui() {
@@ -57,9 +54,10 @@
         (ts.length
           ? ts.map((e, i) => {
             const tag = WA.status.tag(e.fx);
-            return `<div class="prow"><span>${U.esc(e.d.name)} <small class="dim">HP ${e.hp}/${WA.scale.mobHp(e.d)}</small>` +
+            const pick = WA.combat && WA.combat.selected && WA.combat.selected() === e;
+            return `<div class="prow"><span>${pick ? '<b class="warn">TGT</b> ' : ''}${U.esc(e.d.name)} <small class="dim">HP ${e.hp}/${WA.scale.mobHp(e.d)}</small>` +
               (tag ? ` <small class="bad">${U.esc(tag)}</small>` : '') +
-              `</span><button data-vt="${i}" ${btn}>Target</button></div>`;
+              `</span><button data-vf="${i}" ${setBtn}>Set</button><button data-vt="${i}" ${btn}>Aim</button></div>`;
           }).join('')
           : '<div class="dim">No targets in range.</div>') +
         `<button data-vx="1" ${wide}>Close</button>`);
@@ -112,12 +110,12 @@
     if (WA.traits && WA.traits.has('fast_shot')) p = PARTS[1];
     WA.combat.initiative();
     if (s.dead || s.hp <= 0) { VS = 0; return ui(); }
-    if (s.ap < cost()) { VS = 1; return ui(); }
-    s.ap -= cost();
+    const ap = cost();
+    if (s.ap < ap) { VS = 1; return ui(); }
     WA.inv.spendAmmo(ammoId);
     if (WA.weapons.use() === 'jam') {
       WA.game.say(`Your ${wp.name} jams!`);
-      WA.turn.end(true);
+      WA.turn.end(true, ap);
       ui();
       return;
     }
@@ -130,7 +128,7 @@
     } else {
       WA.combat.playerAttack(VT, { mul: p.mul, cripple: p.cripple, weak: p.weak, ammo: ammoId, tag: `VATS ${p.n.toLowerCase()}: ` });
     }
-    WA.turn.end(true);
+    WA.turn.end(true, ap);
     if (s.dead) VS = 0;
     else if (!s.ents.includes(VT)) { VS = 1; VT = null; }
     ui();
@@ -143,6 +141,11 @@
       if (!b || !s || s.dead) return;
       if (b.dataset.vx) { VS = VS === 2 ? 1 : 0; VT = null; }
       else if (b.dataset.ammo) { WA.inv.cycleAmmo(); }
+      else if (b.dataset.vf != null) {
+        // Mark a Fire target without spending AP or taking a called shot.
+        const pick = targets()[+b.dataset.vf];
+        if (pick) { WA.combat.select(pick); VS = 0; VT = null; }
+      }
       else if (b.dataset.vt) { VT = targets()[+b.dataset.vt]; if (VT) VS = 2; }
       else if (b.dataset.vp) shot(PARTS[+b.dataset.vp]);
       ui();

@@ -1,4 +1,6 @@
-/* Turn handling: one player action, then one world turn, then one redraw. */
+/* Turn handling: actions spend AP, then the world takes one turn. A player
+   phase lasts until the pool is empty, so two shots or a few steps happen
+   before the enemies move. */
 (function (WA) {
   'use strict';
   const U = WA.util;
@@ -6,12 +8,33 @@
   // An open panel pauses the world: no world turn, no enemy actions.
   const paused = () => WA.ui.paused();
 
-  function end(used) {
+  // A step is one point. Attacks pass their own cost (see combat.attackCost),
+  // so a round is about two rifle shots or a handful of steps.
+  const STEP = 1;
+
+  /* The world's turn. It runs once the player's AP is spent and refills the
+     pool for the next player phase. */
+  function round(s) {
+    s.ap = WA.char.maxAp();
+    s.round = (s.round | 0) + 1;
+    if (s.hp <= 0) return;
+    // Enemy detection needs current light at the player, not last frame's light.
+    if (s.sneak) s.stealthLight = WA.light.stealth(s);
+    WA.ai.turn();
+    // Companions take their turn after the enemies, once the player is safe.
+    if (s.hp > 0 && WA.party) WA.party.turn();
+    s.sneakMoved = false;
+    s.stealthLight = null;
+  }
+
+  function end(used, apCost) {
     const s = S();
     if (!s) return;
     if (used && !paused()) {
       s.turn++;
-      s.ap = Math.min(WA.char.maxAp(), s.ap + 1);
+      // The action pays for itself; the world only acts when the pool is empty.
+      const cost = Math.max(0, apCost == null ? STEP : apCost | 0);
+      s.ap = Math.max(0, (s.ap | 0) - cost);
       if (s.shaken && s.shaken.turns > 0) {
         s.shaken.turns--;
         if (s.shaken.turns <= 0) {
@@ -20,17 +43,16 @@
         }
       }
       WA.status.tickPlayer(s);
-      if (s.hp > 0) {
-        // Enemy detection needs current light at the player, not last frame's light.
-        if (s.sneak) s.stealthLight = WA.light.stealth(s);
-        WA.ai.turn();
-        // Companions take their turn after the enemies, once the player is safe.
-        if (s.hp > 0 && WA.party) WA.party.turn();
+      // Damage over time follows the clock, so enemy effects tick once per
+      // action exactly as the player's own do.
+      if (Array.isArray(s.ents)) {
+        for (const e of [...s.ents]) {
+          if (e && Array.isArray(e.fx) && e.fx.length) WA.status.tickEntity(e);
+        }
       }
       // People follow the same clock as the daylight: shifts change at the hour.
       if (WA.sched) WA.sched.sync(s);
-      s.sneakMoved = false;
-      s.stealthLight = null;
+      if (s.hp > 0 && s.ap <= 0) round(s);
     }
     if (s.hp <= 0) {
       s.hp = 0;
@@ -52,6 +74,8 @@
     const nx = s.px + dx, ny = s.py + dy;
     const e = tgt || WA.game.entAt(nx, ny);
     let used = true, search = '';
+    // A step costs one point; walking into an enemy pays the weapon's cost.
+    let cost = STEP;
 
     if (e) {
       if (e.d && e.d.ally) {
@@ -73,6 +97,7 @@
         const sneak = WA.field ? WA.field.sneakAttack(e) : false;
         WA.weapons.use();
         const wp = s.weapon ? WA.GAME.items[s.weapon] : null;
+        cost = WA.combat ? WA.combat.attackCost(wp) : 3;
         const skill = WA.skills.weaponSkill(wp);
         if (WA.traits && WA.traits.jinxed() && Math.random() < 0.05) {
           WA.game.say(`Jinxed! You fumble the attack on the ${e.d.name}.`);
@@ -133,7 +158,7 @@
         if (t.exit) WA.game.say(t.exit);
       }
     }
-    end(used);
+    end(used, cost);
     // Searching happens after the turn resolves, so enemies still get to act.
     if (search) WA.loot.open(search);
   }
@@ -144,7 +169,9 @@
     if (WA.combat) WA.combat.initiative();
     if (s.dead || s.hp <= 0) return;
     WA.game.say('You wait.');
-    end(true);
+    // Waiting gives up whatever AP is left, so the world takes its turn now.
+    s.ap = 0;
+    end(true, 0);
   }
 
   WA.turn = { end, playerMove, wait, paused };

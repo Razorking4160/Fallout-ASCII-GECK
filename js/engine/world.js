@@ -153,7 +153,7 @@
       name: 'Vault Dweller', gender: 'male', age: 25,
       seen: RG.map(() => Array(w).fill(0)),
       sp: { ...p.special }, lvl: 1, xp: 0, pts: test ? 0 : 5, hpBonus: 0, inv: (p.inv || []).slice(), weapon: null, armor: null,
-      ap: 6 + p.special.A, vis: null, fx: [], addictions: [], ending: null,
+      ap: 6 + p.special.A, round: 0, initRound: -1, fireTarget: null, vis: null, fx: [], addictions: [], ending: null,
       limbs: WA.limbs ? WA.limbs.fresh() : { l_arm: 100, r_arm: 100, l_leg: 100, r_leg: 100 },
       shaken: null,
       sneak: false, sneakSpotted: false, sneakMoved: false, stealthLight: null,
@@ -198,6 +198,7 @@
     const keep = {
       hp: prev.hp, stims: prev.stims, caps: prev.caps, turn: prev.turn, log: prev.log, home: prev.home, test: prev.test, dead: prev.dead,
       sp: prev.sp, lvl: prev.lvl, xp: prev.xp, pts: prev.pts, hpBonus: prev.hpBonus, inv: prev.inv, weapon: prev.weapon, armor: prev.armor, ap: prev.ap,
+      round: prev.round | 0, initRound: -1, fireTarget: null,
       name: prev.name, gender: prev.gender, age: prev.age,
       fx: prev.fx, addictions: prev.addictions || [], ending: prev.ending || null,
       limbs: prev.limbs, shaken: prev.shaken || null,
@@ -335,8 +336,10 @@
     const S = G.S;
     if (!S) return null;
     const s = {};
+    // fireTarget is a live entity object, not save data: the mark is dropped on
+    // load and Fire falls back to the nearest enemy.
     for (const k in S) if (k !== 'occ' && k !== 'vis' && k !== 'light' && k !== 'ents' &&
-      k !== 'sneakMoved' && k !== 'stealthLight') s[k] = S[k];
+      k !== 'sneakMoved' && k !== 'stealthLight' && k !== 'fireTarget') s[k] = S[k];
     // Allies are rebuilt from the roster, so they never belong in a save.
     s.ents = S.ents.filter(e => !(e.d && e.d.ally)).map(stripEnt);
     // Merchant stock is mutable between a snapshot and a restore; keep the
@@ -523,6 +526,9 @@
     s.sneakSpotted = !!s.sneakSpotted;
     s.sneakMoved = false;
     s.stealthLight = null;
+    s.fireTarget = null;
+    s.round = Math.max(0, s.round | 0);
+    s.initRound = -1;
     s.trapsOff = (s.trapsOff && typeof s.trapsOff === 'object') ? s.trapsOff : {};
     for (const k in s.trapsOff) if (s.trapsOff[k] !== 1) delete s.trapsOff[k];
     s.radaways = Math.max(0, Math.min(99, s.radaways | 0));

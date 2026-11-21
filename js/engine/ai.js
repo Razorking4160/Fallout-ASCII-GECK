@@ -131,12 +131,10 @@
     });
     for (const e of order) {
       if (!s.ents.includes(e)) continue;
-      if (Array.isArray(e.fx) && e.fx.length) {
-        WA.status.tickEntity(e);
-        if (!s.ents.includes(e)) continue;
-      }
-      // A reaction already spent this round replaces the normal action.
-      if (e.skipTurn === s.turn) { e.skipTurn = 0; continue; }
+      // Status effects tick once per action in turn.end(), so a reaction does
+      // not double-tick them by acting here.
+      // A reaction already spent this phase replaces the normal action.
+      if (e.reacted) { e.reacted = 0; continue; }
       act(e);
     }
   }

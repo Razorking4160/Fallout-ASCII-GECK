@@ -22,7 +22,7 @@
     { id: 'heave_ho', name: 'Heave Ho!', lvl: 6, req: { S: 6 }, max: 2, desc: '+2 throwing range per rank.' },
     /* Level 9 */
     { id: 'better_criticals', name: 'Better Criticals', lvl: 9, req: { P: 6, L: 6 }, max: 1, desc: 'Critical hits deal +50% damage.' },
-    { id: 'bonus_rate_of_fire', name: 'Bonus Rate of Fire', lvl: 9, req: { P: 6, I: 6, A: 7 }, max: 1, desc: 'Ranged VATS shots cost 1 less AP.' },
+    { id: 'bonus_rate_of_fire', name: 'Bonus Rate of Fire', lvl: 9, req: { P: 6, I: 6, A: 7 }, max: 1, desc: 'Ranged attacks cost 1 less AP.' },
     { id: 'scrounger', name: 'Scrounger', lvl: 9, req: { L: 6 }, max: 1, desc: 'Ammo you find is 25% more plentiful.' },
     { id: 'stonewall', name: 'Stonewall', lvl: 9, req: { E: 6 }, max: 1, desc: 'Knockdowns and knockbacks cannot move you.' },
     { id: 'dodger', name: 'Dodger', lvl: 9, req: { A: 6 }, max: 1, desc: '+5 Armour Class.' },
@@ -36,7 +36,7 @@
     { id: 'action_boy', name: 'Action Boy', lvl: 12, req: { A: 5 }, max: 2, desc: '+1 action point per rank.' },
     { id: 'lifegiver', name: 'Lifegiver', lvl: 12, req: { E: 4 }, max: 3, desc: '+4 maximum HP per rank.' },
     { id: 'tag', name: 'Tag!', lvl: 12, req: {}, max: 1, desc: 'One extra tag skill.' },
-    { id: 'bonus_hth_attacks', name: 'Bonus HtH Attacks', lvl: 12, req: { A: 6 }, max: 1, desc: 'Melee and unarmed VATS attacks cost 1 less AP.' },
+    { id: 'bonus_hth_attacks', name: 'Bonus HtH Attacks', lvl: 12, req: { A: 6 }, max: 1, desc: 'Melee and unarmed attacks cost 1 less AP.' },
     { id: 'sniper', name: 'Sniper', lvl: 12, req: { P: 8, A: 8 }, max: 1, desc: '+10% chance to hit with ranged weapons at 5+ tiles.' },
     /* Level 18 */
     { id: 'silent_death', name: 'Silent Death', lvl: 18, req: { A: 10 }, max: 1, desc: 'Sneak attacks deal four times damage instead of double.' }
