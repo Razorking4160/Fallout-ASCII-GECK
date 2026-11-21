@@ -10,6 +10,11 @@
 
   const isOpen = () => { const p = U.el('pip'); return !!p && !p.hidden; };
 
+  /* A labelled dashed block, so each screen reads as a stack of groups instead
+     of one long list. Labels are literals, never player data. */
+  const sec = (label, body) => (body
+    ? `<section class="pipsec"><div class="pipsec-h">${label}</div>${body}</section>` : '');
+
   function blurText() {
     const a = document.activeElement;
     if (a && a.id === 'gio') a.blur();
@@ -62,26 +67,29 @@
     const dep = WA.addiction.html();
     return `<div class="prow"><span>${U.esc(s.name || 'Vault Dweller')} <small class="dim">${s.gender || 'male'} · age ${s.age || 25}</small></span></div>` +
       portraitHtml(s) +
-      `<div class="prow"><span>Level <b>${s.lvl}</b><small class="dim">/${WA.scale.CAP}</small> · XP ${capped ? 'MAX' : s.xp + '/' + WA.char.need()}</span>` +
-        `<span>Points <b>${s.pts}</b></span></div>` +
-      `<div class="prow"><span>HP ${s.hp}/${WA.char.maxHp()} · AP ${s.ap}/${WA.char.maxAp()}</span></div>` +
-      shaken +
-      `<div class="prow"><span>AC <b>${WA.weapons.playerAc()}</b> · Sequence <b>${WA.combat.sequence()}</b></span>` +
-      `<small class="dim">armour + Agility</small></div>` +
-      `<div class="prow"><span>Skill points <b>${s.skillPoints | 0}</b> · Perks <b>${s.perkPending | 0}</b></span>` +
-      `<span class="dim">${(s.tags || []).length}/${WA.skills.tagSlots()} tagged</span></div>` +
-      `<div class="prow"><span>TRAITS <small class="dim">${WA.traits.names().length ? U.esc(WA.traits.names().join(' + ')) : 'None'}</small></span></div>` +
-      (WA.traits.has('night_person')
-        ? `<div class="dim" style="font-size:12px">Night Person: IN/PE ${WA.traits.night() ? '+1 (night)' : '−1 (day)'}</div>` : '') +
-      (dep ? `<div class="dim" style="font-size:12px;margin-top:4px">DEPENDENCE</div>` + dep : '') +
-      `<div class="prow" style="gap:12px"><span class="dim">Veteran bonus</span><span>+${WA.scale.dmgBonus(s.lvl)} dmg · +${WA.scale.apBonus(s.lvl)} AP</span></div>` +
-      `<div class="prow"><span class="${rads ? 'warn' : 'dim'}">RADS <b>${rads}</b> ` +
-        `<small class="dim">${pen ? 'max HP -' + pen : 'clean'}</small></span></div>` +
-      (WA.reputation
-        ? `<div class="dim" style="font-size:12px;margin-top:4px">REPUTATION</div>` + WA.reputation.html()
-        : '') +
-      (fx ? `<div class="dim" style="font-size:12px;margin-top:4px">STATUS</div>` + fx : '') +
-      `<div class="dim" style="font-size:12px;margin-top:6px">SPECIAL</div>` + rows;
+      sec('LEVEL',
+        `<div class="prow"><span>Level <b>${s.lvl}</b><small class="dim">/${WA.scale.CAP}</small> · XP ${capped ? 'MAX' : s.xp + '/' + WA.char.need()}</span>` +
+          `<span>Points <b>${s.pts}</b></span></div>` +
+        `<div class="prow"><span>Skill points <b>${s.skillPoints | 0}</b> · Perks <b>${s.perkPending | 0}</b></span>` +
+          `<span class="dim">${(s.tags || []).length}/${WA.skills.tagSlots()} tagged</span></div>`) +
+      sec('VITALS',
+        `<div class="prow"><span>HP ${s.hp}/${WA.char.maxHp()} · AP ${s.ap}/${WA.char.maxAp()}</span></div>` +
+        `<div class="prow"><span>AC <b>${WA.weapons.playerAc()}</b> · Sequence <b>${WA.combat.sequence()}</b></span>` +
+          `<small class="dim">armour + Agility</small></div>` +
+        `<div class="prow"><span class="dim">Veteran bonus</span>` +
+          `<span>+${WA.scale.dmgBonus(s.lvl)} dmg · +${WA.scale.apBonus(s.lvl)} AP</span></div>` +
+        `<div class="prow"><span class="${rads ? 'warn' : 'dim'}">RADS <b>${rads}</b> ` +
+          `<small class="dim">${pen ? 'max HP -' + pen : 'clean'}</small></span></div>`) +
+      sec('CONDITION',
+        shaken +
+        (dep ? `<div class="dim" style="font-size:12px;margin-top:4px">DEPENDENCE</div>` + dep : '') +
+        (fx ? `<div class="dim" style="font-size:12px;margin-top:4px">STATUS</div>` + fx : '')) +
+      sec('TRAITS',
+        `<div class="prow"><span>${WA.traits.names().length ? U.esc(WA.traits.names().join(' + ')) : 'None'}</span></div>` +
+        (WA.traits.has('night_person')
+          ? `<div class="prow"><span class="dim">Night Person: IN/PE ${WA.traits.night() ? '+1 (night)' : '−1 (day)'}</span></div>` : '')) +
+      (WA.reputation ? sec('REPUTATION', WA.reputation.html()) : '') +
+      sec('SPECIAL', rows);
   }
 
   function skillsHtml() {
@@ -98,11 +106,13 @@
         (s.skillPoints > 0 && v < 200 ? `<button data-sk="${d.id}" title="Spend 1 point">+</button>` : '') +
         '</span></div>';
     }).join('');
-    return `<div class="prow"><span>SKILL POINTS <b>${s.skillPoints | 0}</b></span>` +
-      `<span class="dim">${tagged.length}/${slots} tags</span></div>` +
+    return sec('SKILL POINTS',
+      `<div class="prow"><span>SKILL POINTS <b>${s.skillPoints | 0}</b></span>` +
+        `<span class="dim">${tagged.length}/${slots} tags</span></div>` +
       `<div class="dim" style="font-size:12px;margin:2px 0 4px">1 point = +1% (+2% tagged), to 200%. Tag up to ${slots} skills: +20% and double growth. Base values follow SPECIAL.</div>` +
       (WA.field ? WA.field.html() : '') +
-      (WA.rest ? WA.rest.html() : '') + rows;
+      (WA.rest ? WA.rest.html() : '')) +
+      sec('SKILLS', rows);
   }
 
   function perksHtml() {
@@ -119,12 +129,11 @@
         : '<div class="dim">No perk meets your level and SPECIAL yet.</div>')
       : `<div class="dim">No perk choices waiting. Every ${WA.traits.perkEvery() === 4 ? 'fourth' : 'third'} level grants one.</div>`;
     const have = owned.length
-      ? `<div class="dim" style="font-size:12px;margin-top:6px">OWNED</div>` +
-        owned.map(d => `<div class="prow" style="align-items:flex-start"><span>${U.esc(d.name)} ` +
+      ? owned.map(d => `<div class="prow" style="align-items:flex-start"><span>${U.esc(d.name)} ` +
           `<small class="dim">rank ${WA.perks.rank(d.id)}/${d.max}</small><br>` +
           `<small class="dim">${U.esc(d.desc)}</small></span></div>`).join('')
       : '';
-    return head + choices + have;
+    return sec('PERK CHOICES', head + choices) + sec('OWNED', have);
   }
 
   function invHtml() {
@@ -144,7 +153,7 @@
       `<button data-use="radaway" ${s.radaways ? '' : 'disabled'}>RadAway ${s.radaways | 0}${stolen('radaway')}</button>` +
       `<button data-drop="radaway" ${s.radaways ? '' : 'disabled'} style="flex:0 0 54px;font-size:11px">Drop</button>` +
       `</div>`;
-    return pouch + use + WA.inv.html();
+    return sec('SUPPLIES', pouch + use) + sec('CARRIED', WA.inv.html());
   }
 
   const MARK_PRIORITY = { giver: 1, deliver: 2, kill: 2, repair: 3 };
@@ -337,7 +346,9 @@
         `${typeof s.ending.karma === 'number' && WA.reputation ? ' · ' + WA.reputation.karmaTier(s.ending.karma).name : ''}</small></span>` +
         `<button data-end="open" style="width:64px;font-size:13px">Read</button></div>`
       : '';
-    return difficultyHtml() + speedHtml() + soundHtml() + bounty + WA.save.panelHtml() + ending;
+    return sec('DIFFICULTY', difficultyHtml()) + sec('WORLD TURN', speedHtml()) + sec('SOUND', soundHtml()) +
+      (bounty ? sec('BOUNTY', bounty) : '') + sec('SAVES', WA.save.panelHtml()) +
+      (ending ? sec('ENDING', ending) : '');
   }
 
   function render() {

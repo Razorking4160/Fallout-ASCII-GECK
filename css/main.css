@@ -176,7 +176,7 @@ button:disabled{opacity:.4}
 .dlgcheck{font-size:11px;line-height:1.35;color:var(--warn);border-left:2px solid var(--warn);padding-left:6px;margin:5px 0}
 #dlg .use .checkreq{display:block;font-size:10px;line-height:1.2;color:var(--dim);margin-top:2px;letter-spacing:.04em}
 #dlg .use button:active .checkreq{color:var(--bg)}
-.qcard{border-top:1px solid var(--dim);padding-top:6px;margin-top:6px}
+.qcard{border-top:1px dotted var(--dim);padding-top:6px;margin-top:8px}
 .prow .qtrk{width:52px;height:26px;font-size:10px;padding:0}
 .prow .qtrk.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 #pip,#chargen{border:1px solid var(--dim);background:var(--panel);padding:8px 10px;font-size:15px;line-height:1.6}
@@ -209,7 +209,13 @@ body.menu-open{overflow:hidden}
 body.modal-open{overflow:hidden}
 #pip,#chargen,#vats,#dlg,#trade,#pick,#loot,#lock,#hack,#gamble,#ending,#death{position:fixed;z-index:50;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 16px));max-height:calc(100vh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;box-shadow:0 8px 30px rgba(0,0,0,.45)}
 #death{z-index:60}
-#pip .piptabs{position:sticky;top:-8px;z-index:1;background:var(--panel);padding-top:2px}
+#pip{display:flex;flex-direction:column;height:calc(100vh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:hidden}
+#pip .pipbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}
+#pip .piptabs{flex:none;z-index:1;background:var(--panel);padding-top:2px}
+#pip .pipsec{border:1px dashed var(--dim);border-radius:5px;padding:3px 7px 5px;margin:8px 0 0}
+#pip .pipsec-h{font-size:10px;letter-spacing:.12em;color:var(--dim);margin-bottom:1px}
+#pip .prow{padding:2px 0}
+#pip .prow + .prow{border-top:1px dotted var(--dim)}
 .pipclose{flex:0 0 30px!important;width:30px!important;height:32px!important;font-size:17px!important;padding:0!important}
 .closex{flex:0 0 30px!important;width:30px!important;height:30px!important;font-size:16px!important;padding:0!important}
 #dlg .closex,#trade .closex,#pick .closex,#loot .closex,#lock .closex,#hack .closex,#gamble .closex,#vats .closex,#ending .closex{flex:none}
@@ -249,8 +255,8 @@ body.modal-open{overflow:hidden}
 .wprow{margin-top:2px;align-items:flex-start}
 .wprow .wp{color:var(--good);font-weight:700}
 .prow .acts .wpclear{width:52px;height:24px;font-size:10px;padding:0}
-.mlegend{font-size:11px;color:var(--dim);margin-top:2px}
-.mlist{font-size:12px;color:var(--dim);line-height:1.45}
+.mlegend{font-size:11px;color:var(--dim);margin-top:4px;padding-top:3px;border-top:1px dotted var(--dim)}
+.mlist{font-size:12px;color:var(--dim);line-height:1.45;margin-top:2px;padding-top:2px;border-top:1px dotted var(--dim)}
 #pip small{font-size:12px}
 .prow{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .prow button{height:34px;width:48px;font-size:18px;flex:none}
